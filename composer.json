@@ -1,0 +1,26 @@
+{
+    "name": "concept-labs/http",
+    "description": "(C)oncept-Labs Config",
+    "keywords": ["php","http application"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Victor Galitsky",
+            "email": "concept.galitsky@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.2|^7.4|^8.0|^8.2",
+        "concept-labs/http-message": "^1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Concept\\Http\\": "src/"
+        }
+    },
+    "require-dev": {
+    },
+    "autoload-dev": {
+    }
+
+}
