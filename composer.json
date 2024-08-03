@@ -1,6 +1,6 @@
 {
     "name": "concept-labs/http",
-    "description": "(C)oncept-Labs Config",
+    "description": "(C)oncept-Labs HTTP application",
     "keywords": ["php","http application"],
     "license": "MIT",
     "authors": [
