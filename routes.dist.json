@@ -1,0 +1,12 @@
+{
+    "http": {
+        "router": {
+            "handlers": {
+                "/": {
+                    "method": "GET",
+                    "handler": "Concept\\Http\\Handler\\IndexHandler"
+                }
+            }
+        }
+    }
+}
