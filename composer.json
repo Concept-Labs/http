@@ -12,7 +12,8 @@
     "require": {
         "php": "^7.2|^7.4|^8.0|^8.2",
         "concept-labs/di": "^1",
-        "concept-labs/http-message": "^1"
+        "concept-labs/http-message": "^1",
+        "psr/http-server-middleware": "^1"
     },
     "autoload": {
         "psr-4": {
