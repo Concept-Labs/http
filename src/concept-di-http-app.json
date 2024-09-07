@@ -1,9 +1,0 @@
-{
-    "di": {
-        "preference": {
-            "Concept\\Http\\Response\\FlusherInterface": {
-                "class": "Concept\\Http\\Response\\Flusher"
-            }
-        }
-    }
-}
