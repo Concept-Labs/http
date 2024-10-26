@@ -15,5 +15,5 @@ interface FlusherInterface
      * @param ResponseInterface $response
      * @return void
      */
-    public function flush(ResponseInterface $response): void
+    public function flush(ResponseInterface $response): void;
 }

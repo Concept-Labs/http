@@ -1,0 +1,51 @@
+{
+    "di": {
+        
+        "module": {
+            "concept-labs/http":{
+                "depends": [
+                    "concept-labs/http-message",
+                    "concept-labs/config",
+                    "concept-labs/di",
+                    "concept-labs/app"
+                ],
+                "preference": {
+                    "Concept\\Http\\ConfigPrototypeInterface": {
+                        "class": "Concept\\Http\\ConfigPrototype"
+                    },
+                    "Concept\\App\\AppInterface": {
+                        "class": "Concept\\Http\\App\\HttpApp"
+                    },
+                    "Concept\\App\\AppFactoryInterface": {
+                        "class": "Concept\\Http\\App\\AppFactory",
+                        "singleton": true
+                    },
+                    "Concept\\Http\\Response\\FlusherInterface": {
+                        "class": "Concept\\Http\\Response\\Flusher"
+                    },
+                    
+                    
+                    "Concept\\Http\\Middleware\\MiddlewareAggregatorInterface": {
+                        "class": "Concept\\Http\\Middleware\\Configurable\\ConfigurableMiddlewareAggregator"
+                    },
+
+                    "Concept\\Http\\Middleware\\Configurable\\ConfigurableMiddlewareInterface": {
+                        "class": "Concept\\Http\\Middleware\\Configurable\\ConfigurableMiddleware"
+                    },
+
+                    "Concept\\Http\\RequestHandler\\MiddlewareStackHandlerInterface": {
+                        "class": "Concept\\Http\\RequestHandler\\MiddlewareStackHandler"
+                    },
+                    "Concept\\Http\\RequestHandler\\MiddlewareRequestHandlerInterface": {
+                        "class": "Concept\\Http\\RequestHandler\\MiddlewareRequestHandler"
+                    },
+
+                    "Concept\\Http\\Router\\RouterInterface": {
+                        "class": "Concept\\Http\\Router\\Router"
+                    }
+                    
+                }
+            }
+        }
+    }
+}
