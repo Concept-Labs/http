@@ -1,88 +1,57 @@
 <?php
 namespace Concept\Http\App;
 
-use Psr\Container\ContainerInterface;
+use Concept\App\AbstractApp;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-
-use Concept\Config\ConfigInterface;
-use Concept\Factory\FactoryInterface;
-use Concept\Http\Router\RouterInterface;
+use Concept\App\AppInterface;
+use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Http\App\Exception\HttpAppExceptionInterface;
+use Concept\Http\RequestHandler\MiddlewareStackHandlerInterface;
 use Concept\Http\Response\FlusherInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Throwable;
 
 /**
  * Class HttpApp
  * @package Concept\Http\App
  */
-class HttpApp implements HttpAppInterface
+class HttpApp /*extends AbstractApp*/ implements AppInterface
 {
-    protected ?ConfigInterface $config = null;
-    protected ?ContainerInterface $container = null;
-    protected ?FactoryInterface $factory = null;
-    protected ?ServerRequestFactoryInterface $serverRequestFactory = null;
-    protected ?ServerRequestInterface $serverRequest = null;
-    protected ?RouterInterface $router = null;
-    protected ?ResponseInterface $response = null;
-    protected ?FlusherInterface $flusher = null;
+    use ConfigurableTrait;
+
+    private ?ServerRequestFactoryInterface $serverRequestFactory = null;
+    private ?ServerRequestInterface $serverRequest = null;
+    private ?ResponseFactoryInterface $responseFactory = null;
+    private ?ResponseInterface $response = null;
+    private ?FlusherInterface $flusher = null;
+    private ?MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype = null;
+
     protected array $middlewares = [];
 
     public function __construct(
         ServerRequestFactoryInterface $serverRequestFactory,
-        RouterInterface $router,
-        FlusherInterface $flusher
+        ResponseFactoryInterface $responseFactory,
+        FlusherInterface $flusher,
+        MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype
     ) {
         $this->serverRequestFactory = $serverRequestFactory;
-        $this->router = $router;
+        $this->responseFactory = $responseFactory;
         $this->flusher = $flusher;
+        $this->middlewareStackHandlerPrototype = $middlewareStackHandlerPrototype;
     }
 
     /**
      * Set the server request
-     * @param ServerRequestInterface $serverRequest
+     * 
+     * @param ServerRequestInterface $request
      */
-    public function withServerRequest(ServerRequestInterface $serverRequest): self
+    public function withServerRequest(ServerRequestInterface $request): self
     {
         $clone = clone $this;
-        $clone->serverRequest = $serverRequest;
-
-        return $clone;
-    }
-
-    /**
-     * Set the configuration
-     * @param ConfigInterface $config
-     */
-    public function withConfig(ConfigInterface $config): self
-    {
-        $clone = clone $this;
-        $clone->config = $config;
-
-        return $clone;
-    }
-
-    /**
-     * Set the container
-     * @param ContainerInterface $container
-     */
-    public function withContainer(ContainerInterface $container): self
-    {
-        $clone = clone $this;
-        $clone->container = $container;
-
-        return $clone;
-    }
-
-    /**
-     * Set the factory
-     * @param FactoryInterface $factory
-     */
-    public function withFactory(FactoryInterface $factory): self
-    {
-        $clone = clone $this;
-        $clone->factory = $factory;
+        $clone->serverRequest = $request;
 
         return $clone;
     }
@@ -91,12 +60,29 @@ class HttpApp implements HttpAppInterface
      * Add middleware to the stack
      * @param MiddlewareInterface $middleware
      */
-    public function withAddedMiddleware(MiddlewareInterface $middleware): self 
+    public function addMiddleware(MiddlewareInterface $middleware, int $priority = 100): self 
     {
-        $clone = clone $this;
-        $clone->middlewares[] = $middleware;
+        while (isset($this->middlewares[$priority])) {
+            $priority++;
+        }
+    
+        $this->middlewares[$priority] = $middleware;
 
-        return $clone;
+        ksort($this->middlewares);
+
+        return $this;
+    }
+
+    /**
+     * Get the middleware stack
+     * 
+     * @return array
+     */
+    protected function getMiddlewareStack(): iterable
+    {
+        foreach ($this->middlewares as $middleware) {
+            yield $middleware;
+        }
     }
 
     /**
@@ -104,8 +90,53 @@ class HttpApp implements HttpAppInterface
      */
     public function run(): void
     {
-        $this->processMiddlewareStack()
-            ->flush();
+        try {
+
+            $this->processMiddlewareStack()
+                ->flush();
+
+        } catch (HttpAppExceptionInterface $e) {
+
+            //$this->handleAppException($e);
+
+        } catch (Throwable $e) {
+
+            //$this->handleException($e);
+
+        }
+    }
+
+    /**
+     * Process the middleware stack
+     * 
+     * @return self
+     */
+    protected function processMiddlewareStack(): self
+    {
+        $stackHandler = $this
+            ->getMiddlewareStackHandlerPrototype()
+            // ->withFinalHandler(
+            //     new class implements RequestHandlerInterface {
+            //         public function handle(ServerRequestInterface $request): ResponseInterface
+            //         {
+            //             throw new RuntimeException('No middleware stack configured');
+            //         }
+            //     }
+            // )
+            
+            ;
+        
+        foreach ($this->getMiddlewareStack() as $middleware) {
+            $stackHandler = $stackHandler->addMiddleware($middleware);
+        }
+
+        $this->setResponse(
+            $stackHandler->handle(
+                $this->getServerRequest()
+            )
+        );
+
+        return $this;
     }
 
     /**
@@ -119,7 +150,7 @@ class HttpApp implements HttpAppInterface
             $this->serverRequest = $this->getServerRequestFactory()
                 ->createServerRequest(
                     $_SERVER['REQUEST_METHOD'] ?? 'GET',
-                    $_SERVER['REQUEST_URI'] ?? '/',
+                    $this->getServerUrl(),
                     $_SERVER
                 );
         }
@@ -128,152 +159,37 @@ class HttpApp implements HttpAppInterface
     }
 
     /**
-     * Create a middleware handler to process the middleware stack
-     * @return self
-     */
-    protected function processMiddlewareStack(): self
-    {
-        $handler = $this->getRouterHandler();
-
-        foreach (array_reverse($this->middlewares) as $middleware) {
-            
-            if (!($middleware instanceof MiddlewareInterface)) {
-                throw new \InvalidArgumentException(
-                    sprintf(
-                        "Middleware must implement %s",
-                        MiddlewareInterface::class
-                    )
-                );
-            }
-
-            $handler = new class($middleware, $handler) implements RequestHandlerInterface {
-                private MiddlewareInterface $middleware;
-                private RequestHandlerInterface $handler;
-
-                public function __construct(MiddlewareInterface $middleware, RequestHandlerInterface $handler)
-                {
-                    $this->middleware = $middleware;
-                    $this->handler = $handler;
-                }
-
-                public function handle(ServerRequestInterface $request): ResponseInterface
-                {
-                    return $this->middleware->process($request, $this->handler);
-                }
-            };
-        }
-
-        $this->response = $handler->handle($this->getServerRequest());
-
-        return $this;
-    }
-
-    /**
-     * Get the router handler
-     * @return RequestHandlerInterface
-     */
-    protected function getRouterHandler(): RequestHandlerInterface
-    {
-        return new class($this->getRouter()) implements RequestHandlerInterface {
-            private RouterInterface $router;
-
-            public function __construct(RouterInterface $router)
-            {
-                $this->router = $router;
-            }
-
-            public function handle(ServerRequestInterface $request): ResponseInterface
-            {
-                return $this->router->dispatch($request);
-            }
-        };
-    }
-
-    /**
-     * Get the router
-     * @return RouterInterface
-     */
-    protected function getRouter(): RouterInterface
-    {
-        // Clone the router to avoid modifying the original
-        $router = clone $this->router;
-
-        foreach ($this->getRoutes() as $path => $route) {
-            $router->addRoute(
-                $route['method'], 
-                $path, 
-                $this->getFactory()
-                    ->withContainer($this->getContainer())
-                    ->withServiceId($route['handler'])
-                    ->create()
-            );
-        }
-
-        return $router;
-    }
-
-    /**
-     * Get the routes
-     * @return array
-     */
-    protected function getRoutes(): array
-    {
-        return $this->getConfig()->get($this->getHandlerNodesPath());
-    }
-
-    /**
-     * Get the handler nodes path
+     * Get the server URL
+     * 
      * @return string
      */
-    protected function getHandlerNodesPath(): string
+    protected function getServerUrl(): string
     {
-        return sprintf(
-            "%s.%s.%s",
-            self::CONFIG_NODE,
-            RouterInterface::CONFIG_NODE,
-            RouterInterface::CONFIG_NODE_HANDLER
-        );
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $scheme = $_SERVER['REQUEST_SCHEME'] ?? 'http';
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        return $scheme . '://' . $host . $uri;
     }
 
     /**
      * Flush the response
+     * 
      * @return self
      */
     protected function flush(): self
     {
-        $this->getFlusher()->flush($this->getResponse());
+        $this
+            ->getFlusher()
+                ->flush(
+                    $this->getResponse()
+                );
+
         return $this;
     }
 
     /**
-     * Get the configuration
-     * @return ConfigInterface
-     */
-    protected function getConfig(): ConfigInterface
-    {
-        return $this->config;
-    }
-
-    /**
-     * Get the container
-     * @return ContainerInterface
-     */
-    protected function getContainer(): ContainerInterface
-    {
-        return $this->container;
-    }
-
-    /**
-     * Get the factory
-     * @return FactoryInterface
-     */
-    protected function getFactory(): FactoryInterface
-    {
-        return $this->factory;
-    }
-
-    /**
      * Get the server request factory
+     * 
      * @return ServerRequestFactoryInterface
      */
     protected function getServerRequestFactory(): ServerRequestFactoryInterface
@@ -282,12 +198,47 @@ class HttpApp implements HttpAppInterface
     }
 
     /**
+     * Get the middleware stack handler prototype
+     * 
+     * @return MiddlewareStackHandlerInterface
+     */
+    protected function getMiddlewareStackHandlerPrototype(): MiddlewareStackHandlerInterface
+    {
+        return clone $this->middlewareStackHandlerPrototype;
+    }
+
+    /**
+     * Get the response factory
+     * 
+     * @return ResponseFactoryInterface
+     */
+    protected function getResponseFactory(): ResponseFactoryInterface
+    {
+        return $this->responseFactory;
+    }
+
+    /**
      * Get the response
+     * 
      * @return ResponseInterface
      */
     protected function getResponse(): ResponseInterface
     {
         return $this->response;
+    }
+
+    /**
+     * Set the response
+     * 
+     * @param ResponseInterface $response
+     * 
+     * @return self
+     */
+    protected function setResponse(ResponseInterface $response): self
+    {
+        $this->response = $response;
+
+        return $this;
     }
 
     /**
@@ -298,4 +249,25 @@ class HttpApp implements HttpAppInterface
     {
         return $this->flusher;
     }
+
+    protected function handleAppException(HttpAppExceptionInterface $e): void
+    {
+        /**
+         * @todo Implement this method
+         */
+        $response = $this->getResponseFactory()->createResponse(500);
+        $response->getBody()->write($e->getMessage() . PHP_EOL . $e->getTraceAsString());
+        $this->getFlusher()->flush($response);
+    }
+
+    protected function handleException(Throwable $e): void
+    {
+        /**
+         * @todo Implement this method
+         */
+        $response = $this->getResponseFactory()->createResponse(500);
+        $response->getBody()->write('Internal Server Error:' . $e->getMessage() . PHP_EOL . $e->getTraceAsString());
+        $this->getFlusher()->flush($response);
+    }
+
 }
