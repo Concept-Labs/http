@@ -69,7 +69,7 @@ class AppFactory implements AppFactoryInterface
         $middlewareAggregator = $this->getMiddlewareAggregatorPrototype()
             ->withConfig($this->getMiddlewareConfig());
 
-        foreach ($middlewareAggregator->aggregate() as $middleware) {
+        foreach ($middlewareAggregator as $middleware) {
             $this
                 ->getAppInstance()
                 ->addMiddleware($middleware);
@@ -115,7 +115,7 @@ class AppFactory implements AppFactoryInterface
         }
 
         return $this->getConfig()
-            ->fromPath(MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE);
+            ->from(MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE);
     }
 
     /**

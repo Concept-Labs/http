@@ -1,17 +1,17 @@
 <?php
 
-namespace Concept\Http\Middleware\Configurable;
+namespace Concept\Http\Middleware;
 
 use Concept\App\Exception\RuntimeException;
 use Concept\Config\Traits\ConfigurableTrait;
 use Concept\Di\Factory\DiFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
+//use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Concept\Factory\FactoryInterface;
 
-class ConfigurableMiddleware implements ConfigurableMiddlewareInterface
+class Middleware implements MiddlewareInterface
 {
     use ConfigurableTrait;
 

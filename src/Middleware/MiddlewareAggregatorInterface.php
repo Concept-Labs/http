@@ -2,18 +2,11 @@
 namespace Concept\Http\Middleware;
 
 use Concept\Config\ConfigurableInterface;
-use Psr\Http\Server\MiddlewareInterface;
+use IteratorAggregate;
 
-interface MiddlewareAggregatorInterface extends ConfigurableInterface
+interface MiddlewareAggregatorInterface extends ConfigurableInterface, IteratorAggregate
 {
 
     const CONFIG_NODE_MIDDLEWARE = 'middleware';
-   
-    /**
-     * Aggregate middleware
-     * 
-     * @return iterable|MiddlewareInterface[]
-     */
-    public function aggregate(): iterable;
 
 }

@@ -1,32 +1,34 @@
 <?php
-namespace Concept\Http\Middleware\Configurable;
+namespace Concept\Http\Middleware;
 
-use Psr\Http\Server\MiddlewareInterface;
+//use Psr\Http\Server\MiddlewareInterface;
 use Concept\Config\ConfigInterface;
+use Concept\Config\ConfigurableInterface;
 use Concept\Config\Traits\ConfigurableTrait;
-use IteratorAggregate;
 use Traversable;
 
-class ConfigurableMiddlewareAggregator implements ConfigurableMiddlewareAggregatorInterface, IteratorAggregate
+class MiddlewareAggregator implements MiddlewareAggregatorInterface
 {
     use ConfigurableTrait;
 
-    private ?ConfigurableMiddleware $configurableMiddlewarePrototype = null;
+    private ?MiddlewareInterface $middlewarePrototype = null;
 
     /**
      * Dependency injection
      * 
-     * @param ConfigurableMiddlewareInterface $configurableMiddleware
+     * @param MiddlewareInterface $middleware
      */
-    public function __construct(ConfigurableMiddlewareInterface $configurableMiddleware)
+    public function __construct(MiddlewareInterface $middleware)
     {
-        $this->configurableMiddlewarePrototype = $configurableMiddleware;
+        $this->middlewarePrototype = $middleware;
     }
 
     /**
-     * {@inheritDoc}
+     * Aggregate the middleware
+     * 
+     * @return Traversable
      */
-    public function aggregate(): iterable
+    protected function aggregate(): Traversable
     {
         $middlewareStack = [];
 
@@ -60,19 +62,24 @@ class ConfigurableMiddlewareAggregator implements ConfigurableMiddlewareAggregat
      */
     protected function createMiddleware(ConfigInterface $config): MiddlewareInterface
     {
-        return $this
-            ->getConfigurableMiddlewarePrototype()
-            ->withConfig($config);
+        $middleware = $this
+            ->getMiddlewarePrototype();
+
+        if ($middleware instanceof ConfigurableInterface) {
+            $middleware = $middleware->withConfig($config);
+        }
+
+        return $middleware;
     }
 
     /**
-     * Get the configurable middleware prototype
+     * Get the middleware prototype
      * 
-     * @return ConfigurableMiddlewareInterface
+     * @return MiddlewareInterface
      */
-    protected function getConfigurableMiddlewarePrototype(): ConfigurableMiddlewareInterface
+    protected function getMiddlewarePrototype(): MiddlewareInterface
     {
-        return clone $this->configurableMiddlewarePrototype;
+        return clone $this->middlewarePrototype;
     }
 
     /**

@@ -1,8 +1,8 @@
 <?php
 namespace Concept\Http\App\Exception;
 
-use Concept\Http\Exception\HttpExceptionInterface;
+use Throwable;
 
-interface HttpAppExceptionInterface extends HttpExceptionInterface
+interface HttpAppExceptionInterface extends Throwable
 {
 }

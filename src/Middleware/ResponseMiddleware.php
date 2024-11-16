@@ -1,12 +1,14 @@
 <?php
 namespace Concept\Http\Middleware;
 
+use Concept\Config\Traits\ConfigurableTrait;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 class ResponseMiddleware implements ResponseMiddlewareInterface
 {
+    use ConfigurableTrait;
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {

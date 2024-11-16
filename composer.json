@@ -2,15 +2,15 @@
     "name": "concept-labs/http",
     "description": "(C)oncept-Labs HTTP application",
     "keywords": ["php","http application"],
-    "license": "MIT",
+    "license": "Apache-2.0",
     "authors": [
         {
-            "name": "Victor Galitsky",
-            "email": "concept.galitsky@gmail.com"
+            "name": "Mtr",
+            "email": "info.concept.labs@gmail.com"
         }
     ],
     "require": {
-        "php": "^7.2|^7.4|^8.0|^8.2",
+        "php": ">=7.4",
         "concept-labs/app": "^1",
         "concept-labs/di": "^1",
         "concept-labs/http-message": "^1",
