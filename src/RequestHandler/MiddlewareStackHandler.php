@@ -11,7 +11,7 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
     /**
      * @var MiddlewareInterface[]
      */
-    private array $middlewares;
+    private array $middlewares = [];
     
     /**
      * @var RequestHandlerInterface

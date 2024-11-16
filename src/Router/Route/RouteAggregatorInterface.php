@@ -1,22 +1,10 @@
 <?php
 namespace Concept\Http\Router\Route;
 
-use Concept\Config\ConfigInterface;
+use Concept\Config\ConfigurableInterface;
+use IteratorAggregate;
 
-interface RouteAggregatorInterface
+interface RouteAggregatorInterface extends ConfigurableInterface, IteratorAggregate
 {
-    /**
-     * Set the configuration for the router.
-     *
-     * @param ConfigInterface $config
-     * @return self
-     */
-    public function withConfig(ConfigInterface $config): self;
-
-    /**
-     * Aggregate the routes.
-     *
-     * @return iterable
-     */
-    public function aggregate(): iterable;
+    
 }

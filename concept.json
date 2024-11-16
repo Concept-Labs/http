@@ -1,0 +1,71 @@
+{
+    "di": {
+        "namespace": {
+            "\\Concept\\Http": {
+                "depends": [
+                    "concept-labs/http"
+                ]
+            }
+        },
+        "module": {
+            "concept-labs/http": {
+                "depends": [
+                    "concept-labs/app",
+                    "concept-labs/http-message"
+                ],
+                "preference": {
+                    
+                    "Concept\\App\\AppInterface": {
+                        "class": "Concept\\Http\\App\\HttpApp"
+                    },
+                    "Concept\\App\\AppFactoryInterface": {
+                        "class": "Concept\\Http\\App\\AppFactory",
+                        "singleton": true
+                    },
+
+                    "Concept\\Http\\Response\\FlusherInterface": {
+                        "class": "Concept\\Http\\Response\\Flusher"
+                    },
+                    "Concept\\Http\\Middleware\\MiddlewareAggregatorInterface": {
+                        "class": "Concept\\Http\\Middleware\\MiddlewareAggregator"
+                    },
+                    "Concept\\Http\\Middleware\\MiddlewareInterface": {
+                        "class": "Concept\\Http\\Middleware\\Middleware"
+                    },
+
+                    "Concept\\Http\\RequestHandler\\MiddlewareStackHandlerInterface": {
+                        "class": "Concept\\Http\\RequestHandler\\MiddlewareStackHandler"
+                    },
+                    "Concept\\Http\\RequestHandler\\MiddlewareRequestHandlerInterface": {
+                        "class": "Concept\\Http\\RequestHandler\\MiddlewareRequestHandler"
+                    },
+
+                    "Concept\\Http\\Middleware\\ResponseMiddlewareInterface": {
+                        "class": "Concept\\Http\\Middleware\\ResponseMiddleware"
+                    },
+
+                    "Concept\\Http\\Router\\RouterInterface": {
+                        "class": "Concept\\Http\\Router\\Router"
+                    },
+                    
+                    "Concept\\Http\\Router\\Route\\RouteAggregatorInterface": {
+                        "class": "Concept\\Http\\Router\\Route\\RouteAggregator"
+                    },
+
+                    "Concept\\Http\\Router\\Route\\RouteInterface": {
+                        "class": "Concept\\Http\\Router\\Route\\Route"
+                    },
+                    "Concept\\Http\\Router\\Route\\Handler\\RouteHandlerInterface": {
+                        "class": "Concept\\Http\\Router\\Route\\Handler\\RouteHandler"
+                    },
+                    "Concept\\Http\\Router\\Route\\Handler\\HandlerFactoryInterface": {
+                        "class": "Concept\\Http\\Router\\Route\\Handler\\HandlerFactory"
+                    },
+                    "Concept\\Http\\Router\\Route\\ConfigurableRouteFactoryInterface": {
+                        "class": "Concept\\Http\\Router\\Route\\ConfigurableRouteFactory"
+                    }
+                }
+            }
+        }
+    }
+}

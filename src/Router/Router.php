@@ -64,6 +64,6 @@ class Router implements RouterInterface
      */
     protected function getAggregatorConfig(): ConfigInterface
     {
-        return $this->getConfig()->fromPath(RouterInterface::CONFIG_ROUTE_NODE);
+        return $this->getConfig()->from(RouterInterface::CONFIG_ROUTE_NODE);
     }    
 }
