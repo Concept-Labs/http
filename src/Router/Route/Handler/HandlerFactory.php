@@ -3,7 +3,7 @@ namespace Concept\Http\Router\Route\Handler;
 
 use Concept\Config\ConfigurableInterface;
 use Concept\Config\Traits\ConfigurableTrait;
-use Concept\Di\Factory\DiFactoryInterface;
+use Concept\Di\Factory\Context\ConfigContextInterface;
 use Concept\Factory\FactoryInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -49,7 +49,7 @@ class HandlerFactory implements HandlerFactoryInterface
     {
         return $this
             ->getConfig()
-            ->get(DiFactoryInterface::NODE_PREFERENCE);
+            ->get(ConfigContextInterface::NODE_PREFERENCE);
     }
 
     /**

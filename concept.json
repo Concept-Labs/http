@@ -1,19 +1,12 @@
 {
     "di": {
-        "namespace": {
-            "\\Concept\\Http": {
-                "depends": [
-                    "concept-labs/http"
-                ]
-            }
-        },
-        "module": {
+        "package": {
             "concept-labs/http": {
-                "depends": [
-                    "concept-labs/app",
-                    "concept-labs/http-message"
-                ],
                 "preference": {
+
+                    "--Psr\\Http\\Server\\MiddlewareInterface": {
+                        "reference": "Concept\\Http\\Middleware\\MiddlewareInterface"
+                    },
                     
                     "Concept\\App\\AppInterface": {
                         "class": "Concept\\Http\\App\\HttpApp"
@@ -22,7 +15,7 @@
                         "class": "Concept\\Http\\App\\AppFactory",
                         "singleton": true
                     },
-
+                    
                     "Concept\\Http\\Response\\FlusherInterface": {
                         "class": "Concept\\Http\\Response\\Flusher"
                     },
