@@ -2,13 +2,17 @@
 namespace Concept\Http\RequestHandler;
 
 use Concept\Http\Exception\HttpRuntimeException;
+use Concept\Prototype\PrototypableInterface;
+use Concept\Prototype\PrototypableTrait;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface
+class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface, PrototypableInterface
 {
+    use PrototypableTrait;
+
     private ?MiddlewareInterface $middleware = null;
     private ?RequestHandlerInterface $handler = null;
 

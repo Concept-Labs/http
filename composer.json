@@ -14,7 +14,6 @@
         "concept-labs/app": "^1",
         "concept-labs/di": "^1",
         "concept-labs/http-message": "^1",
-        "concept-labs/event-dispatcher": "^1",
         "psr/http-server-middleware": "^1"
     },
     "autoload": {
@@ -25,6 +24,13 @@
     "require-dev": {
     },
     "autoload-dev": {
+    },
+    "extra": {
+        "concept": {
+            "include": [
+                "concept.json"
+            ]
+        }
     }
 
 }

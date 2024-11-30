@@ -1,13 +1,17 @@
 <?php
 namespace Concept\Http\RequestHandler;
 
+use Concept\Prototype\PrototypableInterface;
+use Concept\Prototype\PrototypableTrait;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
+class MiddlewareStackHandler implements MiddlewareStackHandlerInterface, PrototypableInterface
 {
+    use PrototypableTrait;
+
     /**
      * @var MiddlewareInterface[]
      */
@@ -16,7 +20,7 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
     /**
      * @var RequestHandlerInterface
      */
-    private RequestHandlerInterface $defaultHandler;
+    private ?RequestHandlerInterface $finalHandler = null;
 
     /**
      * @var MiddlewareRequestHandlerInterface
@@ -41,7 +45,7 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
     public function withFinalHandler(RequestHandlerInterface $handler): self
     {
         $clone = clone $this;
-    
+        $clone->finalHandler = $handler;
         
         return $clone;
     }
@@ -109,7 +113,7 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
      */
     protected function getFinalHandler(): RequestHandlerInterface
     {
-        return $this->defaultHandler ?? new class implements RequestHandlerInterface {
+        return $this->finalHandler ?? new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
                 throw new \RuntimeException('No final handler configured');

@@ -12,6 +12,7 @@ use Concept\Http\App\Exception\HttpAppExceptionInterface;
 use Concept\Http\RequestHandler\MiddlewareStackHandlerInterface;
 use Concept\Http\Response\FlusherInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 
 /**
@@ -93,15 +94,16 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
         try {
 
             $this->processMiddlewareStack()
-                ->flush();
+//                ->flush() //use response middleware instead
+                ;
 
         } catch (HttpAppExceptionInterface $e) {
 
-            //$this->handleAppException($e);
+            $this->handleAppException($e);
 
         } catch (Throwable $e) {
 
-            //$this->handleException($e);
+            $this->handleException($e);
 
         }
     }
@@ -115,16 +117,13 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
     {
         $stackHandler = $this
             ->getMiddlewareStackHandlerPrototype()
-            // ->withFinalHandler(
-            //     new class implements RequestHandlerInterface {
-            //         public function handle(ServerRequestInterface $request): ResponseInterface
-            //         {
-            //             throw new RuntimeException('No middleware stack configured');
-            //         }
-            //     }
-            // )
-            
-            ;
+            ->withFinalHandler(
+                new class implements RequestHandlerInterface {
+                    public function handle(ServerRequestInterface $request): ResponseInterface {
+                        throw new \RuntimeException('No response generated. Check middleware stack.');
+                    }
+                }
+            );
         
         foreach ($this->getMiddlewareStack() as $middleware) {
             $stackHandler = $stackHandler->addMiddleware($middleware);

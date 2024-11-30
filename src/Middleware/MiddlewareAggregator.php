@@ -5,11 +5,14 @@ namespace Concept\Http\Middleware;
 use Concept\Config\ConfigInterface;
 use Concept\Config\ConfigurableInterface;
 use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Prototype\PrototypableInterface;
+use Concept\Prototype\PrototypableTrait;
 use Traversable;
 
-class MiddlewareAggregator implements MiddlewareAggregatorInterface
+class MiddlewareAggregator implements MiddlewareAggregatorInterface, PrototypableInterface
 {
     use ConfigurableTrait;
+    use PrototypableTrait;
 
     private ?MiddlewareInterface $middlewarePrototype = null;
 

@@ -11,6 +11,7 @@ use Concept\Http\Middleware\MiddlewareAggregatorInterface;
 
 class AppFactory implements AppFactoryInterface
 {
+
     use ConfigurableTrait;
 
     private ?FactoryInterface $factory = null;

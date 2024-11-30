@@ -1,15 +1,21 @@
 <?php
 namespace Concept\Http\Middleware;
 
-use Concept\Config\Traits\ConfigurableTrait;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Prototype\PrototypableInterface;
+use Concept\Prototype\PrototypableTrait;
 
-class ResponseMiddleware implements ResponseMiddlewareInterface
+class ResponseMiddleware implements ResponseMiddlewareInterface, PrototypableInterface
 {
     use ConfigurableTrait;
+    use PrototypableTrait;
 
+    /**
+     * {@inheritDoc}
+     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $response = $handler->handle($request);
