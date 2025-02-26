@@ -6,7 +6,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 interface MiddlewareRequestHandlerInterface extends RequestHandlerInterface
 {
-    public function withMiddleware(MiddlewareInterface $middleware): self;
+    public function withMiddleware(MiddlewareInterface $middleware): static;
 
-    public function withHandler(RequestHandlerInterface $handler): self;
+    public function withHandler(RequestHandlerInterface $handler): static;
 }

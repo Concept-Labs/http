@@ -1,47 +1,57 @@
 <?php
 namespace Concept\Http\App;
 
-use Concept\App\AbstractApp;
+use Throwable;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+
+use Concept\App\AbstractApp;
 use Concept\App\AppInterface;
 use Concept\Config\Traits\ConfigurableTrait;
+use Concept\EventDispatcher\EventBusInterface;
 use Concept\Http\App\Exception\HttpAppExceptionInterface;
 use Concept\Http\RequestHandler\MiddlewareStackHandlerInterface;
 use Concept\Http\Response\FlusherInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-use Throwable;
-
+use Concept\Config\ConfigInterface;
+use Concept\Http\App\Event\StartEvent;
 /**
  * Class HttpApp
  * @package Concept\Http\App
  */
-class HttpApp /*extends AbstractApp*/ implements AppInterface
+
+class HttpApp extends AbstractApp implements AppInterface
 {
+
+    public function __invoke(StartEvent $event)
+    {
+        $this->handleEvent($event);
+    }
+
+    public function handleEvent(StartEvent $event)
+    {
+        echo "<h1>Event handled</h1><pre>";
+        
+    }
+
     use ConfigurableTrait;
 
-    private ?ServerRequestFactoryInterface $serverRequestFactory = null;
+    
     private ?ServerRequestInterface $serverRequest = null;
-    private ?ResponseFactoryInterface $responseFactory = null;
     private ?ResponseInterface $response = null;
-    private ?FlusherInterface $flusher = null;
-    private ?MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype = null;
 
     protected array $middlewares = [];
 
     public function __construct(
-        ServerRequestFactoryInterface $serverRequestFactory,
-        ResponseFactoryInterface $responseFactory,
-        FlusherInterface $flusher,
-        MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype
+        private ServerRequestFactoryInterface $serverRequestFactory,
+        private ResponseFactoryInterface $responseFactory,
+        private FlusherInterface $flusher,
+        private MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype,
+        private EventBusInterface $eventBus
     ) {
-        $this->serverRequestFactory = $serverRequestFactory;
-        $this->responseFactory = $responseFactory;
-        $this->flusher = $flusher;
-        $this->middlewareStackHandlerPrototype = $middlewareStackHandlerPrototype;
     }
 
     /**
@@ -49,7 +59,7 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
      * 
      * @param ServerRequestInterface $request
      */
-    public function withServerRequest(ServerRequestInterface $request): self
+    public function withServerRequest(ServerRequestInterface $request): static
     {
         $clone = clone $this;
         $clone->serverRequest = $request;
@@ -61,15 +71,9 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
      * Add middleware to the stack
      * @param MiddlewareInterface $middleware
      */
-    public function addMiddleware(MiddlewareInterface $middleware, int $priority = 100): self 
+    public function addMiddleware(MiddlewareInterface $middleware, int $priority = 100): static 
     {
-        while (isset($this->middlewares[$priority])) {
-            $priority++;
-        }
-    
-        $this->middlewares[$priority] = $middleware;
-
-        ksort($this->middlewares);
+        $this->middlewares[$priority][] = $middleware;
 
         return $this;
     }
@@ -81,9 +85,19 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
      */
     protected function getMiddlewareStack(): iterable
     {
-        foreach ($this->middlewares as $middleware) {
-            yield $middleware;
+        ksort($this->middlewares);
+        foreach ($this->middlewares as $priority => $middlewares) {
+            foreach ($middlewares as $middleware) {
+                yield $middleware;
+            }
         }
+    }
+
+    public function configure(ConfigInterface $config): static
+    {
+        $this->setConfig($config);
+
+        return $this;
     }
 
     /**
@@ -92,7 +106,10 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
     public function run(): void
     {
         try {
-
+            // $this->eventBus
+            //     ->dispatch(
+            //         (new AppRunBefore())->attach('app', $this)
+            // );
             $this->processMiddlewareStack()
 //                ->flush() //use response middleware instead
                 ;
@@ -111,9 +128,9 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
     /**
      * Process the middleware stack
      * 
-     * @return self
+     * @return static
      */
-    protected function processMiddlewareStack(): self
+    protected function processMiddlewareStack(): static
     {
         $stackHandler = $this
             ->getMiddlewareStackHandlerPrototype()
@@ -145,20 +162,17 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
      */
     protected function getServerRequest(): ServerRequestInterface
     {
-        if ($this->serverRequest === null) {
-            $this->serverRequest = $this->getServerRequestFactory()
-                ->createServerRequest(
-                    $_SERVER['REQUEST_METHOD'] ?? 'GET',
-                    $this->getServerUrl(),
-                    $_SERVER
-                );
-        }
-
-        return $this->serverRequest;
+        return $this->serverRequest ??= $this->getServerRequestFactory()
+            ->createServerRequest(
+                $_SERVER['REQUEST_METHOD'] ?? 'GET',
+                $this->getServerUrl(),
+                $_SERVER
+            );
     }
 
     /**
      * Get the server URL
+     * @todo: improve this
      * 
      * @return string
      */
@@ -173,9 +187,9 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
     /**
      * Flush the response
      * 
-     * @return self
+     * @return static
      */
-    protected function flush(): self
+    protected function flush(): static
     {
         $this
             ->getFlusher()
@@ -231,9 +245,9 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
      * 
      * @param ResponseInterface $response
      * 
-     * @return self
+     * @return static
      */
-    protected function setResponse(ResponseInterface $response): self
+    protected function setResponse(ResponseInterface $response): static
     {
         $this->response = $response;
 
@@ -249,6 +263,11 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
         return $this->flusher;
     }
 
+    /**
+     * Handle application exception
+     * 
+     * @param HttpAppExceptionInterface $e
+     */
     protected function handleAppException(HttpAppExceptionInterface $e): void
     {
         /**
@@ -259,6 +278,11 @@ class HttpApp /*extends AbstractApp*/ implements AppInterface
         $this->getFlusher()->flush($response);
     }
 
+    /**
+     * Handle exception
+     * 
+     * @param Throwable $e
+     */
     protected function handleException(Throwable $e): void
     {
         /**

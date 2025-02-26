@@ -5,13 +5,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Concept\Config\Traits\ConfigurableTrait;
-use Concept\Prototype\PrototypableInterface;
-use Concept\Prototype\PrototypableTrait;
+use Concept\Http\App\Exception\RuntimeException;
 
-class ResponseMiddleware implements ResponseMiddlewareInterface, PrototypableInterface
+class ResponseMiddleware implements ResponseMiddlewareInterface
 {
     use ConfigurableTrait;
-    use PrototypableTrait;
 
     /**
      * {@inheritDoc}
@@ -39,11 +37,12 @@ class ResponseMiddleware implements ResponseMiddlewareInterface, PrototypableInt
      * Send the response headers.
      *
      * @param ResponseInterface $response
-     * @return self
+     * @return static
      */
-    protected function sendHeaders(ResponseInterface $response): self
+    protected function sendHeaders(ResponseInterface $response): static
     {
         if (headers_sent()) {
+            throw new RuntimeException('Headers already sent');
             return $this;
         }
 
@@ -70,9 +69,9 @@ class ResponseMiddleware implements ResponseMiddlewareInterface, PrototypableInt
      *
      * @param string $name
      * @param array $values
-     * @return self
+     * @return static
      */
-    protected function sendHeader(string $name, array $values): self
+    protected function sendHeader(string $name, array $values): static
     {
         header(
             sprintf(
@@ -90,9 +89,9 @@ class ResponseMiddleware implements ResponseMiddlewareInterface, PrototypableInt
      * Send the response body.
      *
      * @param ResponseInterface $response
-     * @return self
+     * @return static
      */
-    protected function sendBody(ResponseInterface $response): self
+    protected function sendBody(ResponseInterface $response): static
     {
         $body = $response->getBody();
         if ($body->isSeekable()) {

@@ -6,13 +6,13 @@ namespace Concept\Http\Middleware;
 use Concept\App\Exception\RuntimeException;
 use Concept\Config\ConfigurableInterface;
 use Concept\Config\Traits\ConfigurableTrait;
-use Concept\Di\Factory\Context\ConfigContextInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Concept\Factory\FactoryInterface;
 use Concept\Prototype\PrototypableInterface;
 use Concept\Prototype\PrototypableTrait;
+use Concept\Singularity\Config\ConfigNodeInterface;
+use Concept\Singularity\Factory\FactoryInterface;
 
 class Middleware implements MiddlewareInterface, PrototypableInterface
 {
@@ -32,6 +32,11 @@ class Middleware implements MiddlewareInterface, PrototypableInterface
     public function __construct(FactoryInterface $factory)
     {
         $this->factory = $factory;
+    }
+
+    public function __clone()
+    {
+        $this->middleware = null;
     }
 
     /**
@@ -83,11 +88,11 @@ class Middleware implements MiddlewareInterface, PrototypableInterface
      */
     protected function getPreference(): string
     {
-        if (!$this->getConfig()->has(ConfigContextInterface::NODE_PREFERENCE)) {
+        if (!$this->getConfig()->has(ConfigNodeInterface::NODE_PREFERENCE)) {
             throw new RuntimeException('No preference set for middleware');
         }
         return $this
             ->getConfig()
-            ->get(ConfigContextInterface::NODE_PREFERENCE);
+            ->get(ConfigNodeInterface::NODE_PREFERENCE);
     }
 }

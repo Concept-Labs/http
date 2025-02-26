@@ -3,8 +3,8 @@ namespace Concept\Http\Router\Route\Handler;
 
 use Concept\Config\ConfigurableInterface;
 use Concept\Config\Traits\ConfigurableTrait;
-use Concept\Di\Factory\Context\ConfigContextInterface;
-use Concept\Factory\FactoryInterface;
+use Concept\Singularity\Config\ConfigNodeInterface;
+use Concept\Singularity\Factory\FactoryInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 class HandlerFactory implements HandlerFactoryInterface
@@ -49,7 +49,7 @@ class HandlerFactory implements HandlerFactoryInterface
     {
         return $this
             ->getConfig()
-            ->get(ConfigContextInterface::NODE_PREFERENCE);
+            ->get(ConfigNodeInterface::NODE_PREFERENCE);
     }
 
     /**

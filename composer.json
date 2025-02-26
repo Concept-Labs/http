@@ -5,14 +5,13 @@
     "license": "Apache-2.0",
     "authors": [
         {
-            "name": "Mtr",
+            "name": "Viktor Halytskyi",
             "email": "info.concept.labs@gmail.com"
         }
     ],
     "require": {
-        "php": ">=7.4",
+        "php": ">=8.2",
         "concept-labs/app": "^1",
-        "concept-labs/di": "^1",
         "concept-labs/http-message": "^1",
         "psr/http-server-middleware": "^1"
     },

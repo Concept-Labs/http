@@ -2,22 +2,19 @@
 namespace Concept\Http\RequestHandler;
 
 use Concept\Http\Exception\HttpRuntimeException;
-use Concept\Prototype\PrototypableInterface;
-use Concept\Prototype\PrototypableTrait;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface, PrototypableInterface
+class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface
 {
-    use PrototypableTrait;
 
     private ?MiddlewareInterface $middleware = null;
     private ?RequestHandlerInterface $handler = null;
 
 
-    public function withMiddleware(MiddlewareInterface $middleware): self
+    public function withMiddleware(MiddlewareInterface $middleware): static
     {
         $clone = clone $this;
         $clone->middleware = $middleware;
@@ -25,7 +22,7 @@ class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface, Pro
         return $clone;
     }
 
-    public function withHandler(RequestHandlerInterface $handler): self
+    public function withHandler(RequestHandlerInterface $handler): static
     {
         $clone = clone $this;
         $clone->handler = $handler;

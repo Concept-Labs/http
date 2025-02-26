@@ -1,16 +1,13 @@
 <?php
 namespace Concept\Http\RequestHandler;
 
-use Concept\Prototype\PrototypableInterface;
-use Concept\Prototype\PrototypableTrait;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-class MiddlewareStackHandler implements MiddlewareStackHandlerInterface, PrototypableInterface
+class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
 {
-    use PrototypableTrait;
 
     /**
      * @var MiddlewareInterface[]
@@ -40,9 +37,9 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface, Prototy
      * 
      * @param RequestHandlerInterface $handler
      * 
-     * @return self
+     * @return static
      */
-    public function withFinalHandler(RequestHandlerInterface $handler): self
+    public function withFinalHandler(RequestHandlerInterface $handler): static
     {
         $clone = clone $this;
         $clone->finalHandler = $handler;
@@ -55,9 +52,9 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface, Prototy
      * 
      * @param MiddlewareInterface $middlewares
      * 
-     * @return self
+     * @return static
      */
-    public function addMiddleware(MiddlewareInterface $middlewares): self
+    public function addMiddleware(MiddlewareInterface $middlewares): static
     {
         $this->middlewares[] = $middlewares;
 
@@ -93,8 +90,6 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface, Prototy
 
         return $handler->handle($request);
     }
-
-
 
     /**
      * Get the middleware request handler prototype

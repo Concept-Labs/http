@@ -8,16 +8,14 @@ use Concept\Config\ConfigInterface;
 use Concept\Config\Traits\ConfigurableTrait;
 use Concept\Http\Middleware\MiddlewareAggregatorInterface;
 use Concept\Singularity\Factory\FactoryInterface;
-use Concept\Singularity\Factory\ServiceFactory;
-use Psr\EventDispatcher\EventDispatcherInterface;
-use Concept\Singularity\Context\ProtoContextInterface;
-use Psr\Container\ContainerInterface;
 
-class AppFactory extends ServiceFactory implements AppFactoryInterface
+class AppFactory implements AppFactoryInterface
 {
 
     use ConfigurableTrait;
 
+    private ?FactoryInterface $factory = null;
+    private ?MiddlewareAggregatorInterface $middlewareAggregator = null;
     private ?AppInterface $app = null;
     
     /**
@@ -27,24 +25,22 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
      * @param MiddlewareAggregatorInterface $middlewareAggregator
      */
     public function __construct(
-        ContainerInterface $container,
-        ProtoContextInterface $context,
-        private MiddlewareAggregatorInterface $middlewareAggregator,
-        private EventDispatcherInterface $eventDispatcher
+        FactoryInterface $factory,
+        MiddlewareAggregatorInterface $middlewareAggregator
     )
     {
-        parent::__construct($container, $context);
+        $this->factory = $factory;
+        $this->middlewareAggregator = $middlewareAggregator;
     }
 
 
     /**
      * {@inheritDoc}
      */
-    public function create(array $args = []): AppInterface
+    public function create(): AppInterface
     {
         return $this
-            ->createAppInstance($args)
-            //->
+            ->createAppInstance()
             ->middlewareAggregate()
             ->getAppInstance();
     }
@@ -54,11 +50,12 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
      * 
      * @return static
      */
-    protected function createAppInstance(array $args = []): static
+    protected function createAppInstance(): static
     {
         $this->app = $this
-            ->createService(AppInterface::class, $args)
-            ->setConfig($this->getConfig());
+            ->getFactory()
+            ->create(AppInterface::class)
+            ->withConfig($this->getConfig());
 
         return $this;
     }
@@ -82,6 +79,15 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
         return $this;
     }
 
+    /**
+     * Get the factory
+     * 
+     * @return FactoryInterface
+     */
+    protected function getFactory(): FactoryInterface
+    {
+        return $this->factory;
+    }
 
     /**
      * Get the middleware aggregator

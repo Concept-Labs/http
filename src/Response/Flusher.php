@@ -23,9 +23,9 @@ class Flusher implements FlusherInterface
      * Send the response headers.
      *
      * @param ResponseInterface $response
-     * @return self
+     * @return static
      */
-    protected function sendHeaders(ResponseInterface $response): self
+    protected function sendHeaders(ResponseInterface $response): static
     {
         if (headers_sent()) {
             return $this;
@@ -54,9 +54,9 @@ class Flusher implements FlusherInterface
      *
      * @param string $name
      * @param array $values
-     * @return self
+     * @return static
      */
-    protected function sendHeader(string $name, array $values): self
+    protected function sendHeader(string $name, array $values): static
     {
         header(
             sprintf(
@@ -74,9 +74,9 @@ class Flusher implements FlusherInterface
      * Send the response body.
      *
      * @param ResponseInterface $response
-     * @return self
+     * @return static
      */
-    protected function sendBody(ResponseInterface $response): self
+    protected function sendBody(ResponseInterface $response): static
     {
         $body = $response->getBody();
         if ($body->isSeekable()) {

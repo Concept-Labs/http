@@ -2,7 +2,6 @@
 namespace Concept\Http\Router\Route;
 
 use Concept\Config\Traits\ConfigurableTrait;
-use Concept\Di\Factory\FactoryInterface;
 use Concept\Http\Router\Route\Handler\RouteHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -14,11 +13,6 @@ class Route implements RouteInterface
 
     private ?RouteHandlerInterface $routeHandlerPrototype = null;
 
-    /**
-     * Dependency injection
-     * 
-     * @param FactoryInterface $factory
-     */
     public function __construct(RouteHandlerInterface $handler)
     {
         $this->routeHandlerPrototype = $handler;

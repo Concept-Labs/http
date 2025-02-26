@@ -5,14 +5,11 @@ namespace Concept\Http\Middleware;
 use Concept\Config\ConfigInterface;
 use Concept\Config\ConfigurableInterface;
 use Concept\Config\Traits\ConfigurableTrait;
-use Concept\Prototype\PrototypableInterface;
-use Concept\Prototype\PrototypableTrait;
 use Traversable;
 
-class MiddlewareAggregator implements MiddlewareAggregatorInterface, PrototypableInterface
+class MiddlewareAggregator implements MiddlewareAggregatorInterface
 {
     use ConfigurableTrait;
-    use PrototypableTrait;
 
     private ?MiddlewareInterface $middlewarePrototype = null;
 
@@ -26,6 +23,7 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface, Prototypabl
         $this->middlewarePrototype = $middleware;
     }
 
+
     /**
      * Aggregate the middleware
      * 
@@ -33,27 +31,26 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface, Prototypabl
      */
     protected function aggregate(): Traversable
     {
-        $middlewareStack = [];
+        $middlewareConfigStack = [];
 
         foreach ($this->getConfig() as $id => $middlewareConfigData) {
-
             $config = $this->getConfig()->withData($middlewareConfigData);
 
             /**
              * @todo: improve this
              */
-            $priority = $config->get('priority');
+            $priority = (int)$config->get('priority');
             while (isset($middlewareStack[$priority])) {
                 $priority++;
             }
-            
-            $middlewareStack[$priority] = $this->createMiddleware($config);
+
+            $middlewareConfigStack[$priority] = $config;
         }
 
-        ksort($middlewareStack);
+        ksort($middlewareConfigStack);
 
-        foreach ($middlewareStack as $middleware) {
-            yield $middleware;
+        foreach ($middlewareConfigStack as $middlewareConfig) {
+            yield $this->createMiddleware($middlewareConfig);
         }
     }
 
@@ -69,6 +66,10 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface, Prototypabl
             ->getMiddlewarePrototype();
 
         if ($middleware instanceof ConfigurableInterface) {
+            /**
+             * @important!
+             * @todo: service factory will do this?
+             */
             $middleware = $middleware->withConfig($config);
         }
 
