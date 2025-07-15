@@ -3,21 +3,20 @@
 namespace Concept\Http\Middleware;
 
 //use Psr\Http\Server\MiddlewareInterface;
-use Concept\App\Exception\RuntimeException;
-use Concept\Config\ConfigurableInterface;
-use Concept\Config\Traits\ConfigurableTrait;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Concept\Prototype\PrototypableInterface;
-use Concept\Prototype\PrototypableTrait;
+use Concept\App\Exception\RuntimeException;
+use Concept\Config\ConfigurableInterface;
+use Concept\Config\Traits\ConfigurableTrait;
+
 use Concept\Singularity\Config\ConfigNodeInterface;
+use Concept\Singularity\Contract\Lifecycle\PrototypeInterface;
 use Concept\Singularity\Factory\FactoryInterface;
 
-class Middleware implements MiddlewareInterface, PrototypableInterface
+class Middleware implements MiddlewareInterface, PrototypeInterface
 {
     use ConfigurableTrait;
-    use PrototypableTrait;
 
     private ?FactoryInterface $factory = null;
     private ?MiddlewareInterface $middleware = null;
@@ -37,6 +36,11 @@ class Middleware implements MiddlewareInterface, PrototypableInterface
     public function __clone()
     {
         $this->middleware = null;
+    }
+
+    public function prototype(): static
+    {
+        return clone $this;
     }
 
     /**
