@@ -2,7 +2,7 @@
 namespace Concept\Http\Router\Route;
 
 use Concept\Config\ConfigInterface;
-use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Config\Contract\ConfigurableTrait;
 
 use Concept\Http\Router\Route\RouteInterface;
 use Traversable;
@@ -37,7 +37,7 @@ class RouteAggregator implements RouteAggregatorInterface
     public function createRoute(ConfigInterface $config): RouteInterface
     {
         $route = $this->getRoutePrototype()
-            ->withConfig($config);
+            ->setConfig($config);
         
         return $route;
     }
@@ -57,7 +57,7 @@ class RouteAggregator implements RouteAggregatorInterface
         foreach ($this->getConfig() as $routeConfigData) {
             yield $this->createRoute(
                 $this->getConfig()
-                    ->withData($routeConfigData)
+                    ->hydrate($routeConfigData)
             );
         }
     }
@@ -71,7 +71,7 @@ class RouteAggregator implements RouteAggregatorInterface
     // protected function createRoute(ConfigInterface $config): object
     // {
     //     $routeFactory = $this->getRouteFactory()
-    //         ->withConfig($config);
+    //         ->setConfig($config);
         
     //     return $routeFactory->create();
     // }

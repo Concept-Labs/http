@@ -1,11 +1,11 @@
 <?php
 namespace Concept\Http\App;
 
-use Concept\App\AppFactoryInterface;
-use Concept\App\AppInterface;
+use Concept\Http\AppFactoryInterface;
+use Concept\Http\AppInterface;
 use Concept\App\Exception\RuntimeException;
 use Concept\Config\ConfigInterface;
-use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Http\Middleware\MiddlewareAggregatorInterface;
 use Concept\Singularity\Factory\FactoryInterface;
 use Concept\Singularity\Factory\ServiceFactory;
@@ -71,7 +71,7 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
     protected function middlewareAggregate(): static
     {
         $middlewareAggregator = $this->getMiddlewareAggregator()
-            ->withConfig($this->getMiddlewareConfig());
+            ->setConfig($this->getMiddlewareConfig());
 
         foreach ($middlewareAggregator as $middleware) {
             $this
@@ -110,7 +110,7 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
         }
 
         return $this->getConfig()
-            ->from(MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE);
+            ->node(MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE);
     }
 
     /**

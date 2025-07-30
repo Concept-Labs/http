@@ -4,7 +4,7 @@ namespace Concept\Http\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Http\App\Exception\RuntimeException;
 
 class ResponseMiddleware implements ResponseMiddlewareInterface
@@ -16,11 +16,14 @@ class ResponseMiddleware implements ResponseMiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $response = $handler->handle($request);
+        echo "RESPONSE MIDDLEWARE PROCESSING\n";
+        //$response = $handler->handle($request);
         
-        $this->flush($response);
+        //$this->flush($response);
 
-        return $response;
+        //return $response;
+
+        return $handler->handle($request);
     }
 
     /**

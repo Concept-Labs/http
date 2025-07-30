@@ -1,7 +1,7 @@
 <?php
 namespace Concept\Http\Router\Route\Handler;
 
-use Concept\Config\ConfigurableInterface;
+use Concept\Config\Contract\ConfigurableInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 interface HandlerFactoryInterface extends ConfigurableInterface

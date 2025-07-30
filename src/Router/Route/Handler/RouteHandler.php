@@ -1,7 +1,7 @@
 <?php
 namespace Concept\Http\Router\Route\Handler;
 
-use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Config\Contract\ConfigurableTrait;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -43,7 +43,7 @@ class RouteHandler implements RouteHandlerInterface
         if ($this->requestHandler === null) {
             $this->requestHandler = $this
                 ->getFactory()
-                ->withConfig($this->getConfig())
+                ->setConfig($this->getConfig())
                 ->create();
         }
 

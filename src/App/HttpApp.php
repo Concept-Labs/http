@@ -9,15 +9,15 @@ use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-use Concept\App\AbstractApp;
-use Concept\App\AppInterface;
-use Concept\Config\Traits\ConfigurableTrait;
-use Concept\EventDispatcher\EventBusInterface;
+use Concept\Http\AbstractApp;
+use Concept\Http\AppInterface;
+use Concept\Http\App\Event\StartEvent;
 use Concept\Http\App\Exception\HttpAppExceptionInterface;
 use Concept\Http\RequestHandler\MiddlewareStackHandlerInterface;
 use Concept\Http\Response\FlusherInterface;
+use Concept\EventDispatcher\EventBusInterface;
 use Concept\Config\ConfigInterface;
-use Concept\Http\App\Event\StartEvent;
+use Concept\Config\Contract\ConfigurableTrait;
 /**
  * Class HttpApp
  * @package Concept\Http\App
@@ -25,17 +25,6 @@ use Concept\Http\App\Event\StartEvent;
 
 class HttpApp extends AbstractApp implements AppInterface
 {
-
-    public function __invoke(StartEvent $event)
-    {
-        $this->handleEvent($event);
-    }
-
-    public function handleEvent(StartEvent $event)
-    {
-        echo "<h1>Event handled</h1><pre>";
-        
-    }
 
     use ConfigurableTrait;
 
@@ -52,6 +41,9 @@ class HttpApp extends AbstractApp implements AppInterface
         private MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype,
         private EventBusInterface $eventBus
     ) {
+        $this->eventBus->dispatch(new StartEvent(
+            ['app' => $this]
+        ));
     }
 
     /**
@@ -71,11 +63,30 @@ class HttpApp extends AbstractApp implements AppInterface
      * Add middleware to the stack
      * @param MiddlewareInterface $middleware
      */
-    public function addMiddleware(MiddlewareInterface $middleware, int $priority = 100): static 
+    public function addMiddleware(MiddlewareInterface $middleware, int $priority = 100, ?string $id = null ): static 
     {
-        $this->middlewares[$priority][] = $middleware;
+        $this->middlewares[$priority][$id ?? spl_object_id($middleware)] = $middleware;
 
         return $this;
+    }
+
+    /**
+     * Get middleware by name
+     * 
+     * @param string $className
+     * @return MiddlewareInterface|null
+     */
+    public function getMiddleware(string $className): ?MiddlewareInterface
+    {
+        foreach ($this->middlewares as $middlewares) {
+            foreach ($middlewares as $middleware) {
+                if (get_class($middleware) === $className) {
+                    return $middleware;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -86,6 +97,8 @@ class HttpApp extends AbstractApp implements AppInterface
     protected function getMiddlewareStack(): iterable
     {
         ksort($this->middlewares);
+        
+        
         foreach ($this->middlewares as $priority => $middlewares) {
             foreach ($middlewares as $middleware) {
                 yield $middleware;
@@ -130,17 +143,53 @@ class HttpApp extends AbstractApp implements AppInterface
      * 
      * @return static
      */
+    // protected function processMiddlewareStack(): static
+    // {
+    //     $stackHandler = $this
+    //         ->getMiddlewareStackHandlerPrototype()
+    //         ->withFinalHandler(
+    //             new class implements RequestHandlerInterface {
+    //                 public function handle(ServerRequestInterface $request): ResponseInterface {
+    //                     throw new \RuntimeException('No response generated. Check middleware stack.');
+    //                 }
+    //             }
+    //         );
+        
+    //     foreach ($this->getMiddlewareStack() as $middleware) {
+    //         $stackHandler = $stackHandler->addMiddleware($middleware);
+    //     }
+
+    //     $this->setResponse(
+    //         $stackHandler->handle(
+    //             $this->getServerRequest()
+    //         )
+    //     );
+
+    //     return $this;
+    // }
+    
     protected function processMiddlewareStack(): static
     {
         $stackHandler = $this
             ->getMiddlewareStackHandlerPrototype()
             ->withFinalHandler(
-                new class implements RequestHandlerInterface {
+                new class ($this->getResponseFactory()) implements RequestHandlerInterface {
+                    public function __construct(private ResponseFactoryInterface $responseFactory) {
+                        $this->responseFactory = $responseFactory;
+                    }
+
                     public function handle(ServerRequestInterface $request): ResponseInterface {
-                        throw new \RuntimeException('No response generated. Check middleware stack.');
+                        $response = $this->responseFactory->createResponse(404)
+                            ->withHeader('Content-Type', 'text/plain');
+                            $response->getBody()
+                            ->write('404 Not Found: No response generated. Check middleware stack.');
+                        return $response;
+                        // Alternatively, you can throw an exception here
+                        //throw new \RuntimeException('404: No response generated.');
                     }
                 }
-            );
+            )
+            ;
         
         foreach ($this->getMiddlewareStack() as $middleware) {
             $stackHandler = $stackHandler->addMiddleware($middleware);
@@ -151,6 +200,8 @@ class HttpApp extends AbstractApp implements AppInterface
                 $this->getServerRequest()
             )
         );
+
+        $this->flush();
 
         return $this;
     }

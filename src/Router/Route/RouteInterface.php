@@ -2,7 +2,7 @@
 
 namespace Concept\Http\Router\Route;
 
-use Concept\Config\ConfigurableInterface;
+use Concept\Config\Contract\ConfigurableInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 

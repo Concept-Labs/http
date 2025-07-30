@@ -6,15 +6,17 @@ namespace Concept\Http\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Http\Server\MiddlewareInterface;
+
 use Concept\App\Exception\RuntimeException;
-use Concept\Config\ConfigurableInterface;
-use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Config\Contract\ConfigurableInterface;
+use Concept\Config\Contract\ConfigurableTrait;
 
 use Concept\Singularity\Config\ConfigNodeInterface;
 use Concept\Singularity\Contract\Lifecycle\PrototypeInterface;
 use Concept\Singularity\Factory\FactoryInterface;
 
-class Middleware implements MiddlewareInterface, PrototypeInterface
+class MiddlewareWrapper implements MiddlewareWrapperInterface, PrototypeInterface
 {
     use ConfigurableTrait;
 
@@ -67,7 +69,7 @@ class Middleware implements MiddlewareInterface, PrototypeInterface
                     $this->getPreference()
                 );
             if ($this->middleware instanceof ConfigurableInterface) {
-                $this->middleware = $this->middleware->withConfig($this->getConfig());
+                $this->middleware = $this->middleware->setConfig($this->getConfig());
             }
                 
         }

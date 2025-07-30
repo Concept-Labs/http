@@ -3,22 +3,22 @@ namespace Concept\Http\Middleware;
 
 //use Psr\Http\Server\MiddlewareInterface;
 use Concept\Config\ConfigInterface;
-use Concept\Config\ConfigurableInterface;
-use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Config\Contract\ConfigurableInterface;
+use Concept\Config\Contract\ConfigurableTrait;
 use Traversable;
 
 class MiddlewareAggregator implements MiddlewareAggregatorInterface
 {
     use ConfigurableTrait;
 
-    private ?MiddlewareInterface $middlewarePrototype = null;
+    private ?MiddlewareWrapperInterface $middlewarePrototype = null;
 
     /**
      * Dependency injection
      * 
-     * @param MiddlewareInterface $middleware
+     * @param MiddlewareWrapperInterface $middleware
      */
-    public function __construct(MiddlewareInterface $middleware)
+    public function __construct(MiddlewareWrapperInterface $middleware)
     {
         $this->middlewarePrototype = $middleware;
     }
@@ -34,7 +34,7 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
         $middlewareConfigStack = [];
 
         foreach ($this->getConfig() as $id => $middlewareConfigData) {
-            $config = $this->getConfig()->withData($middlewareConfigData);
+            $config = $this->getConfig()->hydrate($middlewareConfigData);
 
             /**
              * @todo: improve this
@@ -58,9 +58,9 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
      * Create middleware wrapper
      * 
      * @param ConfigInterface $config
-     * @return MiddlewareInterface
+     * @return MiddlewareWrapperInterface
      */
-    protected function createMiddleware(ConfigInterface $config): MiddlewareInterface
+    protected function createMiddleware(ConfigInterface $config): MiddlewareWrapperInterface
     {
         $middleware = $this
             ->getMiddlewarePrototype();
@@ -70,7 +70,7 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
              * @important!
              * @todo: service factory will do this?
              */
-            $middleware = $middleware->withConfig($config);
+            $middleware = $middleware->setConfig($config);
         }
 
         return $middleware;
@@ -79,9 +79,9 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
     /**
      * Get the middleware prototype
      * 
-     * @return MiddlewareInterface
+     * @return MiddlewareWrapperInterface
      */
-    protected function getMiddlewarePrototype(): MiddlewareInterface
+    protected function getMiddlewarePrototype(): MiddlewareWrapperInterface
     {
         return clone $this->middlewarePrototype;
     }

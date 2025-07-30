@@ -1,7 +1,7 @@
 <?php
 namespace Concept\Http\Router\Route;
 
-use Concept\Config\ConfigurableInterface;
+use Concept\Config\Contract\ConfigurableInterface;
 use IteratorAggregate;
 
 interface RouteAggregatorInterface extends ConfigurableInterface, IteratorAggregate

@@ -1,7 +1,7 @@
 <?php
 namespace Concept\Http\Router\Route;
 
-use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Http\Router\Route\Handler\RouteHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -27,10 +27,10 @@ class Route implements RouteInterface
         if (!in_array($request->getMethod(), $this->getMethods())) {
             return false;
         }
+        
+        $routePathRegex = $this->buildRouteRegex($this->getPath());
 
-        $routePath = $this->buildRouteRegex($this->getPath());
-
-        return (bool)preg_match($routePath, $request->getUri()->getPath());
+        return (bool)preg_match($routePathRegex, rtrim($request->getUri()->getPath(), '/'));
     }
 
     /**
@@ -41,7 +41,7 @@ class Route implements RouteInterface
         $request = $this->extractParameters($request);
 
         return $this->getRouteHandlerPrototype()
-            ->withConfig($this->getConfig()->from(RouteInterface::CONFIG_HANDLER_NODE))
+            ->setConfig($this->getConfig()->node(RouteInterface::CONFIG_HANDLER_NODE))
             ->handle($request);
     }
 
@@ -53,10 +53,10 @@ class Route implements RouteInterface
      */
     protected function buildRouteRegex(string $path): string
     {
-        // Замінюємо динамічні параметри {param} на регулярні вирази
+        // Replace dynamic parameters {param} with regular expressions
         $routePath = preg_replace('#\{([a-zA-Z0-9_]+)\}#', '(?P<$1>[a-zA-Z0-9_]+)', $path);
 
-        // Обробляємо необов'язкові параметри в маршруті
+        // Handle optional parameters in the route
         $routePath = preg_replace('#/\{([a-zA-Z0-9_]+)\?\}#', '(/(?P<$1>[a-zA-Z0-9_]+))?', $routePath);
 
         return '#^' . $routePath . '$#';

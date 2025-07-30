@@ -1,5 +1,6 @@
 {
     "singularity": {
+
         "package": {
             "concept-labs/http": {
                 "preference": {
@@ -8,10 +9,10 @@
                         "reference": "Concept\\Http\\Middleware\\MiddlewareInterface"
                     },
                     
-                    "Concept\\App\\AppInterface": {
+                    "Concept\\Http\\AppInterface": {
                         "class": "Concept\\Http\\App\\HttpApp"
                     },
-                    "Concept\\App\\AppFactoryInterface": {
+                    "Concept\\Http\\AppFactoryInterface": {
                         "class": "Concept\\Http\\App\\AppFactory",
                         "singleton": true
                     },
@@ -22,8 +23,8 @@
                     "Concept\\Http\\Middleware\\MiddlewareAggregatorInterface": {
                         "class": "Concept\\Http\\Middleware\\MiddlewareAggregator"
                     },
-                    "Concept\\Http\\Middleware\\MiddlewareInterface": {
-                        "class": "Concept\\Http\\Middleware\\Middleware"
+                    "Concept\\Http\\Middleware\\MiddlewareWrapperInterface": {
+                        "class": "Concept\\Http\\Middleware\\MiddlewareWrapper"
                     },
 
                     "Concept\\Http\\RequestHandler\\MiddlewareStackHandlerInterface": {

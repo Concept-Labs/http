@@ -2,30 +2,27 @@
 
 namespace Concept\Http\Router;
 
-use Concept\Config\ConfigInterface;
-use Concept\Config\Traits\ConfigurableTrait;
-use Concept\Http\Router\Route\RouteAggregatorInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Concept\Singularity\Contract\Lifecycle\SharedInterface;
+use Concept\Config\ConfigInterface;
+use Concept\Config\Contract\ConfigurableTrait;
+use Concept\Http\Router\Exception\NotFoundException;
+use Concept\Http\Router\Route\RouteAggregatorInterface;
+use Throwable;
 
-class Router implements RouterInterface
+class Router implements RouterInterface, SharedInterface
 {
     use ConfigurableTrait;
-
-    private ?RouteAggregatorInterface $routeAggregatorPrototype = null;
-
-    
 
     /**
      * Dependency injection
      * 
      * @param RouteAggregatorInterface $routeAggregator
      */
-    public function __construct(RouteAggregatorInterface $routeAggregator)
-    {
-        $this->routeAggregatorPrototype = $routeAggregator;
-    }
+    public function __construct(private RouteAggregatorInterface $routeAggregator)
+    {}
 
 
     /**
@@ -33,11 +30,7 @@ class Router implements RouterInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        
-        $routeAggregator = $this->getRouteAggregatorPrototype()
-            ->withConfig($this->getAggregatorConfig());
-
-        foreach ($routeAggregator as $route) {
+        foreach ($this->getRouteAggregator() as $route) {
             if ($route->match($request)) {
                 return $route->handle($request);
             }
@@ -52,9 +45,13 @@ class Router implements RouterInterface
     /**
      * {@inheritDoc}
      */
-    protected function getRouteAggregatorPrototype(): RouteAggregatorInterface
+    protected function getRouteAggregator(): RouteAggregatorInterface
     {
-        return clone $this->routeAggregatorPrototype;
+        if (!$this->routeAggregator->hasConfig()) {
+            $this->routeAggregator->setConfig($this->getAggregatorConfig());
+        }
+        
+        return $this->routeAggregator;
     }
 
     /**
@@ -64,6 +61,12 @@ class Router implements RouterInterface
      */
     protected function getAggregatorConfig(): ConfigInterface
     {
-        return $this->getConfig()->from(RouterInterface::CONFIG_ROUTE_NODE);
+        try {
+            return $this->getConfig()->node(RouterInterface::CONFIG_ROUTE_NODE);
+        } catch (Throwable) {
+            throw new NotFoundException(
+                'Router configuration not found. Please ensure that the configuration is set up correctly.'
+            );
+        }
     }    
 }

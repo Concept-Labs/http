@@ -1,7 +1,7 @@
 <?php
 namespace Concept\Http\Middleware;
 
-use Concept\Config\ConfigurableInterface;
+use Concept\Config\Contract\ConfigurableInterface;
 use IteratorAggregate;
 
 interface MiddlewareAggregatorInterface extends ConfigurableInterface, IteratorAggregate

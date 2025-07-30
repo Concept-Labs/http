@@ -85,7 +85,8 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
         foreach (array_reverse($this->middlewares) as $middleware) {
             $handler = $this->getMiddelwareRequestHandlerPrototype()
                 ->withMiddleware($middleware)
-                ->withHandler($handler);
+                ->withHandler($handler)
+                ;
         }
 
         return $handler->handle($request);

@@ -1,8 +1,8 @@
 <?php
 namespace Concept\Http\Router\Route\Handler;
 
-use Concept\Config\ConfigurableInterface;
-use Concept\Config\Traits\ConfigurableTrait;
+use Concept\Config\Contract\ConfigurableInterface;
+use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Singularity\Config\ConfigNodeInterface;
 use Concept\Singularity\Factory\FactoryInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -34,7 +34,7 @@ class HandlerFactory implements HandlerFactoryInterface
         }
         
         if ($handler instanceof ConfigurableInterface) {
-            $handler = $handler->withConfig($this->getConfig());
+            $handler = $handler->setConfig($this->getConfig());
         }
         
         return $handler;
