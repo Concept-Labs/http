@@ -125,7 +125,7 @@ class HttpApp extends AbstractApp implements AppInterface
             // );
             $this->processMiddlewareStack()
 //                ->flush() //use response middleware instead
-                ;
+            ;
 
         } catch (HttpAppExceptionInterface $e) {
 
@@ -201,7 +201,7 @@ class HttpApp extends AbstractApp implements AppInterface
             )
         );
 
-        $this->flush();
+        //$this->flush();  //use flusher middleware instead
 
         return $this;
     }

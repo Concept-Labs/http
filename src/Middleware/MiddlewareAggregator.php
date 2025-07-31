@@ -11,16 +11,16 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
 {
     use ConfigurableTrait;
 
-    private ?MiddlewareWrapperInterface $middlewarePrototype = null;
+    private ?MiddlewareWrapperInterface $middlewareWrapperPrototype = null;
 
     /**
      * Dependency injection
      * 
      * @param MiddlewareWrapperInterface $middleware
      */
-    public function __construct(MiddlewareWrapperInterface $middleware)
+    public function __construct(MiddlewareWrapperInterface $middlewareWrapper)
     {
-        $this->middlewarePrototype = $middleware;
+        $this->middlewareWrapperPrototype = $middlewareWrapper;
     }
 
 
@@ -34,13 +34,15 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
         $middlewareConfigStack = [];
 
         foreach ($this->getConfig() as $id => $middlewareConfigData) {
-            $config = $this->getConfig()->hydrate($middlewareConfigData);
+            $config = (clone $this->getConfig())
+                ->reset()
+                ->hydrate($middlewareConfigData);
 
             /**
              * @todo: improve this
              */
             $priority = (int)$config->get('priority');
-            while (isset($middlewareStack[$priority])) {
+            while (isset($middlewareConfigStack[$priority])) {
                 $priority++;
             }
 
@@ -50,7 +52,7 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
         ksort($middlewareConfigStack);
 
         foreach ($middlewareConfigStack as $middlewareConfig) {
-            yield $this->createMiddleware($middlewareConfig);
+            yield $this->createMiddlewareWrapper($middlewareConfig);
         }
     }
 
@@ -60,10 +62,10 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
      * @param ConfigInterface $config
      * @return MiddlewareWrapperInterface
      */
-    protected function createMiddleware(ConfigInterface $config): MiddlewareWrapperInterface
+    protected function createMiddlewareWrapper(ConfigInterface $config): MiddlewareWrapperInterface
     {
         $middleware = $this
-            ->getMiddlewarePrototype();
+            ->getMiddlewareWrapperPrototype();
 
         if ($middleware instanceof ConfigurableInterface) {
             /**
@@ -81,9 +83,9 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
      * 
      * @return MiddlewareWrapperInterface
      */
-    protected function getMiddlewarePrototype(): MiddlewareWrapperInterface
+    protected function getMiddlewareWrapperPrototype(): MiddlewareWrapperInterface
     {
-        return clone $this->middlewarePrototype;
+        return clone $this->middlewareWrapperPrototype;
     }
 
     /**

@@ -30,11 +30,15 @@ class Router implements RouterInterface, SharedInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        
+        
         foreach ($this->getRouteAggregator() as $route) {
             if ($route->match($request)) {
                 return $route->handle($request);
             }
         }
+
+        
 
         /**
          * Continue to the next middleware

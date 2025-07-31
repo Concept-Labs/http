@@ -119,13 +119,13 @@ class Bootstrap
 
     
 
-    protected function getEventBus(): ?EventBusInterface
-    {
-        /**
-          @todo EventBus as middleware: move to app
-         */
-        return $this->getContainer()?->get(EventBusInterface::class, [], [get_class($this)]);
-    }
+    // protected function getEventBus(): ?EventBusInterface
+    // {
+    //     /**
+    //       @todo EventBus as middleware: move to app
+    //      */
+    //     return $this->getContainer()?->get(EventBusInterface::class, [], [get_class($this)]);
+    // }
 
     protected function initErrorHandler(): static
     {
