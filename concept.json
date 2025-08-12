@@ -4,10 +4,6 @@
         "package": {
             "concept-labs/http": {
                 "preference": {
-
-                    "--Psr\\Http\\Server\\MiddlewareInterface": {
-                        "reference": "Concept\\Http\\Middleware\\MiddlewareInterface"
-                    },
                     
                     "Concept\\Http\\AppInterface": {
                         "class": "Concept\\Http\\App\\HttpApp"

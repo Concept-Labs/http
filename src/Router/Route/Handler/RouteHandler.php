@@ -1,26 +1,25 @@
 <?php
 namespace Concept\Http\Router\Route\Handler;
 
-use Concept\Config\Contract\ConfigurableTrait;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Concept\Config\Contract\ConfigurableInterface;
+use Concept\Config\Contract\ConfigurableTrait;
 
 class RouteHandler implements RouteHandlerInterface
 {
     use ConfigurableTrait;
 
-    protected ?HandlerFactoryInterface $factory = null;
     protected ?RequestHandlerInterface $requestHandler = null;
 
     /**
      * Dependency injection
      * 
-     * @param FactoryInterface $factory
+     * @param HandlerFactoryInterface $factory
      */
-    public function __construct(HandlerFactoryInterface $factory)
+    public function __construct(protected HandlerFactoryInterface $factory)
     {
-        $this->factory = $factory;
     }
 
     /**
@@ -28,9 +27,8 @@ class RouteHandler implements RouteHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return $this
-            ->getHandler()
-            ->handle($request);   
+        return $this->createHandler()
+            ->handle($request);
     }
 
     /**
@@ -38,13 +36,22 @@ class RouteHandler implements RouteHandlerInterface
      * 
      * @return RequestHandlerInterface
      */
-    protected function getHandler(): RequestHandlerInterface
+    protected function createHandler(): RequestHandlerInterface
     {
         if ($this->requestHandler === null) {
-            $this->requestHandler = $this
-                ->getFactory()
-                ->setConfig($this->getConfig())
-                ->create();
+            $factory = $this
+                ->getHandlerFactory();
+            if ($factory instanceof ConfigurableInterface) {
+                //pass the configuration to the factory
+                $factory->setConfig($this->getConfig());
+            }
+
+            $this->requestHandler = $factory->create();
+
+            if ($this->requestHandler instanceof ConfigurableInterface) {
+                //pass the configuration to the handler
+                $this->requestHandler->setConfig($this->getConfig());
+            }
         }
 
         return $this->requestHandler;
@@ -55,7 +62,7 @@ class RouteHandler implements RouteHandlerInterface
      * 
      * @return HandlerFactoryInterface
      */
-    protected function getFactory(): HandlerFactoryInterface
+    protected function getHandlerFactory(): HandlerFactoryInterface
     {
         return $this->factory;
     }

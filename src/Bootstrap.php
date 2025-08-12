@@ -2,19 +2,23 @@
 namespace Concept\Http;
 
 use Psr\Container\ContainerInterface;
-use Concept\Composer\Composer;
-use Concept\Config\Factory as ConfigFactory;
-use Concept\Config\ConfigInterface;
-use Concept\Config\Contract\ConfigurableInterface;
 use Concept\Singularity\Singularity;
 use Concept\Singularity\Config\Plugin\ComposerPlugin;
+use Concept\Config\ConfigInterface;
+use Concept\Config\Factory as ConfigFactory;
+use Concept\Composer\Composer;
+use Concept\Config\Contract\ConfigurableInterface;
 //use Concept\EventDispatcher\EventBusInterface;
 
 
 class Bootstrap
 {
-
-    private ?ConfigInterface $config = null;
+    /**
+     * The main configuration instance
+     * 
+     * @var ConfigInterface|null
+     */
+    protected ?ConfigInterface $config = null;
 
     /**
      * Bootstrap constructor.
@@ -23,22 +27,39 @@ class Bootstrap
      * @param ConfigInterface $config
      */
     public function __construct(
+        /**
+         * Base path of the application. Must.
+         */
         private string $base,
+
+        /**
+         * Source of the configuration may be a file path or glob pattern
+         */
         private string $configSource,
+        
+        /**
+         * Optional: use Singularity container if not set
+         * Not tested on Separate PSR container if provided
+         */
         private ?ContainerInterface $container = null  // use Singularity container if not set
     )
-    {
-        $this
-            ->initErrorHandler()
-        //    ->initEventBus()
-        ;
-    }
+    {}
 
+    /**
+     * Get the base path
+     * 
+     * @return string
+     */
     private function getBase(): string
     {
         return $this->base;
     }
 
+    /**
+     * Get the configuration source (file path or glob pattern)
+     * 
+     * @return string
+     */
     private function getConfigSrc(): string
     {
         return $this->configSource;
@@ -51,8 +72,11 @@ class Bootstrap
      */
     protected function getConfig(): ConfigInterface
     {
-        if (null === $this->config) {
-
+        if (!$this->config instanceof ConfigInterface) {
+            /**
+               basics
+               @todo: improve context creation
+             */
             $context = [
                 //'APPID' => $this->getConfig()->get('app.id'),
                 'BASE' => $this->getBase(),
@@ -62,7 +86,11 @@ class Bootstrap
             $this->config = (new ConfigFactory())
                 ->withContext($context)
                 ->withGlob($this->getBase() . DIRECTORY_SEPARATOR . $this->getConfigSrc())
+                /**
+                   @todo: register singularity (container) plugin separately
+                 */
                 ->withPlugin(ComposerPlugin::class) // register the Singularity Composer plugin
+
                 ->create()
             ;
         }
@@ -77,16 +105,22 @@ class Bootstrap
      */
     protected function getContainer(): ContainerInterface
     {
-        $this->container ??= new Singularity($this->getConfig()); // prefer to use Singularity container if not set
+        /**
+            ATTENTION: this is not tested with separate PSR container
+            Prefer to use the provided container if set
+            Otherwise, use Singularity container
+         */
+        $this->container ??= new Singularity($this->getConfig());
 
+        /**
+         * @important! Set the config to the container if it implements ConfigurableInterface
+         */
         $this->container instanceof ConfigurableInterface
             && $this->container->setConfig($this->getConfig());
 
         return $this->container;
     }
    
-    
-
     /**
      * Create the application instance
      *
@@ -98,38 +132,20 @@ class Bootstrap
             ->getContainer()
                 ->get(AppFactoryInterface::class)
                     ->setConfig(
-                        $this->getConfig()->node('app')
+                        $this->getConfig() //->node('app') //no separate node for app config anymore
                     )
                 ->create();
     }
 
     /**
-     * Get the application ID
-     * 
-     * @return string
+      @todo: EventBus as middleware
      */
-    protected function getAppId(): string
-    {
-        /**
-         @todo
-         */
-        return uniqid('app_', true);
-        //return $this->config->get('app.id');
-    }
-
-    
-
     // protected function getEventBus(): ?EventBusInterface
     // {
     //     /**
     //       @todo EventBus as middleware: move to app
     //      */
-    //     return $this->getContainer()?->get(EventBusInterface::class, [], [get_class($this)]);
+    //     return $this->getContainer()?->get(EventBusInterface::class, [], [static::class]);
     // }
 
-    protected function initErrorHandler(): static
-    {
-        // set_error_handler(fn($errno, $errstr, $errfile, $errline) => throw new \ErrorException($errstr, 0, $errno, $errfile, $errline));
-        return $this;
-    }
 }

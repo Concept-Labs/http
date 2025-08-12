@@ -5,8 +5,8 @@ namespace Concept\Http\Router;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Concept\Singularity\Contract\Lifecycle\SharedInterface;
 use Concept\Config\ConfigInterface;
+use Concept\Singularity\Contract\Lifecycle\SharedInterface;
 use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Http\Router\Exception\NotFoundException;
 use Concept\Http\Router\Route\RouteAggregatorInterface;
@@ -30,16 +30,11 @@ class Router implements RouterInterface, SharedInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        
-        
         foreach ($this->getRouteAggregator() as $route) {
             if ($route->match($request)) {
                 return $route->handle($request);
             }
         }
-
-        
-
         /**
          * Continue to the next middleware
          */

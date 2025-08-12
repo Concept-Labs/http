@@ -2,9 +2,9 @@
 
 namespace Concept\Http\Router\Route;
 
-use Concept\Config\Contract\ConfigurableInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Concept\Config\Contract\ConfigurableInterface;
 
 interface RouteInterface extends RequestHandlerInterface, ConfigurableInterface
 {

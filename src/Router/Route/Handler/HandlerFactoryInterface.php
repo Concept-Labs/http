@@ -2,15 +2,8 @@
 namespace Concept\Http\Router\Route\Handler;
 
 use Concept\Config\Contract\ConfigurableInterface;
-use Psr\Http\Server\RequestHandlerInterface;
+use Concept\Singularity\Factory\ServiceFactoryInterface;
 
-interface HandlerFactoryInterface extends ConfigurableInterface
+interface HandlerFactoryInterface extends ServiceFactoryInterface, ConfigurableInterface
 {
-    /**
-     * Create a handler.
-     *
-     * @return HandlerInterface
-     */
-    public function create(): RequestHandlerInterface;
-
 }

@@ -1,6 +1,7 @@
 <?php
 namespace Concept\Http\Router\Route;
 
+use Concept\Config\Config;
 use Concept\Config\ConfigInterface;
 use Concept\Config\Contract\ConfigurableTrait;
 
@@ -42,6 +43,11 @@ class RouteAggregator implements RouteAggregatorInterface
         return $route;
     }
 
+    /**
+     * Get the route prototype
+     * 
+     * @return RouteInterface
+     */
     protected function getRoutePrototype(): RouteInterface
     {
         return clone $this->routePrototype;
@@ -54,10 +60,9 @@ class RouteAggregator implements RouteAggregatorInterface
      */
     protected function aggregate(): Traversable
     {
-        foreach ($this->getConfig() as $routeConfigData) {
+        foreach ($this->getConfig() as $path => $routeConfigData) {
             yield $this->createRoute(
-                $this->getConfig()
-                    ->hydrate($routeConfigData)
+                Config::fromArray($routeConfigData + ['path' => $path])
             );
         }
     }

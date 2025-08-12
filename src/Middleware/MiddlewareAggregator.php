@@ -2,6 +2,8 @@
 namespace Concept\Http\Middleware;
 
 //use Psr\Http\Server\MiddlewareInterface;
+
+use Concept\Config\Config;
 use Concept\Config\ConfigInterface;
 use Concept\Config\Contract\ConfigurableInterface;
 use Concept\Config\Contract\ConfigurableTrait;
@@ -33,15 +35,13 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
     {
         $middlewareConfigStack = [];
 
-        foreach ($this->getConfig() as $id => $middlewareConfigData) {
-            $config = (clone $this->getConfig())
-                ->reset()
-                ->hydrate($middlewareConfigData);
+        foreach ($this->getConfig() as $id => $config) {
+            
 
             /**
              * @todo: improve this
              */
-            $priority = (int)$config->get('priority');
+            $priority = (int)$config['priority'];
             while (isset($middlewareConfigStack[$priority])) {
                 $priority++;
             }
@@ -59,10 +59,10 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
     /**
      * Create middleware wrapper
      * 
-     * @param ConfigInterface $config
+     * @param array $config
      * @return MiddlewareWrapperInterface
      */
-    protected function createMiddlewareWrapper(ConfigInterface $config): MiddlewareWrapperInterface
+    protected function createMiddlewareWrapper(array $config): MiddlewareWrapperInterface
     {
         $middleware = $this
             ->getMiddlewareWrapperPrototype();
@@ -72,7 +72,7 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
              * @important!
              * @todo: service factory will do this?
              */
-            $middleware = $middleware->setConfig($config);
+            $middleware = $middleware->setConfig(Config::fromArray($config));
         }
 
         return $middleware;

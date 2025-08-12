@@ -8,7 +8,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Server\MiddlewareInterface;
 
-use Concept\App\Exception\RuntimeException;
 use Concept\Config\Contract\ConfigurableInterface;
 use Concept\Config\Contract\ConfigurableTrait;
 
@@ -95,7 +94,7 @@ class MiddlewareWrapper implements MiddlewareWrapperInterface, PrototypeInterfac
     protected function getPreference(): string
     {
         if (!$this->getConfig()->has(ConfigNodeInterface::NODE_PREFERENCE)) {
-            throw new RuntimeException('No preference set for middleware');
+            throw new \RuntimeException('No preference set for middleware');
         }
         return $this
             ->getConfig()

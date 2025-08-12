@@ -1,24 +1,23 @@
 <?php
 namespace Concept\Http\App;
 
+use Psr\Container\ContainerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Concept\Http\AppFactoryInterface;
 use Concept\Http\AppInterface;
-use Concept\App\Exception\RuntimeException;
 use Concept\Config\ConfigInterface;
 use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Http\Middleware\MiddlewareAggregatorInterface;
 use Concept\Singularity\Factory\FactoryInterface;
 use Concept\Singularity\Factory\ServiceFactory;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Concept\Singularity\Context\ProtoContextInterface;
-use Psr\Container\ContainerInterface;
 
 class AppFactory extends ServiceFactory implements AppFactoryInterface
 {
 
     use ConfigurableTrait;
 
-    private ?AppInterface $app = null;
+    protected ?AppInterface $app = null;
     
     /**
      * Dependency injection
@@ -101,7 +100,7 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
     protected function getMiddlewareConfig(): ConfigInterface
     {
         if (!$this->getConfig()->has(MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE)) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 sprintf(
                     'No middleware configured: "%s" node not found',
                     MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE
@@ -121,7 +120,7 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
     protected function getAppInstance(): AppInterface
     {
         if (null === $this->app) {
-            throw new RuntimeException('App not created');
+            throw new \RuntimeException('App not created');
         }
 
         return $this->app;

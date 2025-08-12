@@ -18,6 +18,9 @@ use Concept\Http\Response\FlusherInterface;
 use Concept\EventDispatcher\EventBusInterface;
 use Concept\Config\ConfigInterface;
 use Concept\Config\Contract\ConfigurableTrait;
+use Concept\Http\App\Exception\NotHandledException;
+use Fig\Http\Message\StatusCodeInterface;
+
 /**
  * Class HttpApp
  * @package Concept\Http\App
@@ -137,55 +140,32 @@ class HttpApp extends AbstractApp implements AppInterface
 
         }
     }
-
+    
     /**
      * Process the middleware stack
      * 
      * @return static
      */
-    // protected function processMiddlewareStack(): static
-    // {
-    //     $stackHandler = $this
-    //         ->getMiddlewareStackHandlerPrototype()
-    //         ->withFinalHandler(
-    //             new class implements RequestHandlerInterface {
-    //                 public function handle(ServerRequestInterface $request): ResponseInterface {
-    //                     throw new \RuntimeException('No response generated. Check middleware stack.');
-    //                 }
-    //             }
-    //         );
-        
-    //     foreach ($this->getMiddlewareStack() as $middleware) {
-    //         $stackHandler = $stackHandler->addMiddleware($middleware);
-    //     }
-
-    //     $this->setResponse(
-    //         $stackHandler->handle(
-    //             $this->getServerRequest()
-    //         )
-    //     );
-
-    //     return $this;
-    // }
-    
     protected function processMiddlewareStack(): static
     {
         $stackHandler = $this
             ->getMiddlewareStackHandlerPrototype()
+            /**
+             @todo: move final handler implementation to a dedicated middleware
+             */
             ->withFinalHandler(
                 new class ($this->getResponseFactory()) implements RequestHandlerInterface {
                     public function __construct(private ResponseFactoryInterface $responseFactory) {
                         $this->responseFactory = $responseFactory;
                     }
-
                     public function handle(ServerRequestInterface $request): ResponseInterface {
-                        $response = $this->responseFactory->createResponse(404)
-                            ->withHeader('Content-Type', 'text/plain');
-                            $response->getBody()
-                            ->write('404 Not Found: No response generated. Check middleware stack.');
+                        $response = $this->responseFactory->createResponse(StatusCodeInterface::STATUS_NOT_FOUND)
+                            // $response->getBody()
+                            // ->write('404 Not Found: No response generated. Check middleware stack.')
+                        ;
                         return $response;
-                        // Alternatively, you can throw an exception here
-                        //throw new \RuntimeException('404: No response generated.');
+                        // Alternatively, throw an exception here
+                        //throw new NotHandledException('No response generated.');
                     }
                 }
             )
@@ -223,7 +203,7 @@ class HttpApp extends AbstractApp implements AppInterface
 
     /**
      * Get the server URL
-     * @todo: improve this
+     @todo: improve this
      * 
      * @return string
      */
@@ -236,7 +216,7 @@ class HttpApp extends AbstractApp implements AppInterface
     }
 
     /**
-     * Flush the response
+     * Built-in flusher of the response
      * 
      * @return static
      */

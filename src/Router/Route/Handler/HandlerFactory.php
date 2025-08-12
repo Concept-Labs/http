@@ -1,38 +1,28 @@
 <?php
 namespace Concept\Http\Router\Route\Handler;
 
+use Psr\Http\Server\RequestHandlerInterface;
 use Concept\Config\Contract\ConfigurableInterface;
 use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Singularity\Config\ConfigNodeInterface;
-use Concept\Singularity\Factory\FactoryInterface;
-use Psr\Http\Server\RequestHandlerInterface;
+use Concept\Singularity\Factory\ServiceFactory;
 
-class HandlerFactory implements HandlerFactoryInterface
+class HandlerFactory extends ServiceFactory implements HandlerFactoryInterface
 {
     use ConfigurableTrait;
-
-    private ?FactoryInterface $factory = null;
-
-    public function __construct(FactoryInterface $factory)
-    {
-        $this->factory = $factory;
-    }
 
     /**
      * {@inheritDoc}
      */
-    public function create(): RequestHandlerInterface
+    public function create(array $args = []): RequestHandlerInterface
     {
-        $handler = $this
-            ->getFactory()
-            ->create(
+        $handler = $this->createService(
                 $this->getHandlerPreference()
             );
 
-        if (!($handler instanceof RequestHandlerInterface)) {
-            throw new \RuntimeException('Route handler must implement RequestHandlerInterface');
-        }
-        
+            /**
+             @todo remove because router sets config on handler
+             */
         if ($handler instanceof ConfigurableInterface) {
             $handler = $handler->setConfig($this->getConfig());
         }
@@ -52,14 +42,5 @@ class HandlerFactory implements HandlerFactoryInterface
             ->get(ConfigNodeInterface::NODE_PREFERENCE);
     }
 
-    /**
-     * Get the factory
-     * 
-     * @return FactoryInterface
-     */
-    protected function getFactory(): FactoryInterface
-    {
-        return $this->factory;
-    }
 
 }

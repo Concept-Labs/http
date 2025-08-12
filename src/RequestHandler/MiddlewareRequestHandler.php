@@ -14,6 +14,12 @@ class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface
     private ?RequestHandlerInterface $handler = null;
 
 
+    /**
+     * With middleware
+     *
+     * @param MiddlewareInterface $middleware
+     * @return static
+     */
     public function withMiddleware(MiddlewareInterface $middleware): static
     {
         $clone = clone $this;
@@ -22,6 +28,12 @@ class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface
         return $clone;
     }
 
+    /**
+     * With handler
+     *
+     * @param RequestHandlerInterface $handler
+     * @return static
+     */
     public function withHandler(RequestHandlerInterface $handler): static
     {
         $clone = clone $this;
@@ -30,6 +42,13 @@ class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface
         return $clone;
     }
 
+    /**
+     * Handle the request
+     *
+     * @param ServerRequestInterface $request
+     * @return ResponseInterface
+     * @throws HttpRuntimeException
+     */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         if ($this->getMiddleware() === null) {
@@ -48,11 +67,22 @@ class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface
                 );
     }
 
+    /**
+     * Get the handler
+     *
+     * @return RequestHandlerInterface
+     */
     protected function getHandler(): RequestHandlerInterface
     {
         return $this->handler;
     }
 
+    /**
+     * Get the middleware
+     *
+     * @return MiddlewareInterface
+     * @throws HttpRuntimeException
+     */
     protected function getMiddleware(): MiddlewareInterface
     {
         return $this->middleware;
