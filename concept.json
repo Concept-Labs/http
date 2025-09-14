@@ -9,8 +9,10 @@
                         "class": "Concept\\Http\\App\\HttpApp"
                     },
                     "Concept\\Http\\AppFactoryInterface": {
-                        "class": "Concept\\Http\\App\\AppFactory",
-                        "singleton": true
+                        "class": "Concept\\Http\\App\\AppFactory"
+                    },
+                    "Concept\\Http\\App\\Config\\AppConfigInterface": {
+                        "class": "Concept\\Http\\App\\Config\\AppConfig"
                     },
                     
                     "Concept\\Http\\Response\\FlusherInterface": {

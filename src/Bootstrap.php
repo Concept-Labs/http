@@ -2,12 +2,25 @@
 namespace Concept\Http;
 
 use Psr\Container\ContainerInterface;
+use Concept\Composer\Composer;
 use Concept\Singularity\Singularity;
 use Concept\Singularity\Config\Plugin\ComposerPlugin;
 use Concept\Config\ConfigInterface;
 use Concept\Config\Factory as ConfigFactory;
-use Concept\Composer\Composer;
 use Concept\Config\Contract\ConfigurableInterface;
+use Concept\Config\Parser\Plugin\ConfigValuePlugin;
+use Concept\Config\Parser\Plugin\ContextPlugin;
+use Concept\Config\Parser\Plugin\Directive\CommentPlugin;
+use Concept\Config\Parser\Plugin\Directive\ImportPlugin;
+use Concept\Config\Parser\Plugin\Expression\EnvPlugin;
+use Concept\Config\Parser\Plugin\Expression\ReferencePlugin;
+use Concept\Config\Parser\Plugin\IncludePlugin;
+use Concept\Debug\Debug;
+use Concept\EventDispatcher\EventBusInterface;
+use Concept\Http\App\Config\AppConfig;
+use Concept\Http\App\Config\AppConfigInterface;
+use Concept\Singularity\SingularityInterface;
+
 //use Concept\EventDispatcher\EventBusInterface;
 
 
@@ -73,27 +86,49 @@ class Bootstrap
     protected function getConfig(): ConfigInterface
     {
         if (!$this->config instanceof ConfigInterface) {
+
+            /**
+             @todo compiled
+             */
+            // $compiled = $this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php';
+            // if (file_exists($compiled)) {
+            //     $cfg = require $compiled;
+            //     return $this->config = new Config($cfg);
+            // }
+
             /**
                basics
                @todo: improve context creation
              */
             $context = [
-                //'APPID' => $this->getConfig()->get('app.id'),
                 'BASE' => $this->getBase(),
                 'VENDOR' => Composer::getVendorDir(),
             ];
 
-            $this->config = (new ConfigFactory())
+            $this->config = (new ConfigFactory(AppConfig::class))
                 ->withContext($context)
                 ->withGlob($this->getBase() . DIRECTORY_SEPARATOR . $this->getConfigSrc())
+                
                 /**
                    @todo: register singularity (container) plugin separately
                  */
                 ->withPlugin(ComposerPlugin::class) // register the Singularity Composer plugin
 
+                ->withPlugin(CommentPlugin::class, 996)
+                ->withPlugin(EnvPlugin::class, 999)
+                ->withPlugin(ContextPlugin::class, 998)
+                ->withPlugin(IncludePlugin::class, 997)
+                ->withPlugin(ImportPlugin::class, 996)
+                ->withPlugin(ReferencePlugin::class, 995)
+                ->withPlugin(ConfigValuePlugin::class, 994)
+
                 ->create()
             ;
         }
+
+         //$this->config->export($this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php');
+         //Debug::dd($this->config);
+
 
         return $this->config;
     }
@@ -110,17 +145,34 @@ class Bootstrap
             Prefer to use the provided container if set
             Otherwise, use Singularity container
          */
-        $this->container ??= new Singularity($this->getConfig());
+        $this->container ??= new Singularity();
 
         /**
          * @important! Set the config to the container if it implements ConfigurableInterface
          */
         $this->container instanceof ConfigurableInterface
             && $this->container->setConfig($this->getConfig());
+        
+        $this->container instanceof SingularityInterface
+            && $this->container->register(AppConfigInterface::class, $this->getConfig());
+
+        
+
+//----------------------------------
+
+$eventBus = $this->container->get(EventBusInterface::class, [], [static::class]);
+// $eventBus->register(\Concept\Http\App\Event\StartEvent::class, function ($event) {
+//     echo "<pre>";
+//     print_r($event);
+//         //die('StartEvent fired');
+//     });
+
+$eventBus->dispatch((new \Concept\Http\App\Event\StartEvent())->attach('app', $this));
+//---------------------------------
 
         return $this->container;
     }
-   
+
     /**
      * Create the application instance
      *
@@ -131,9 +183,9 @@ class Bootstrap
         return $this
             ->getContainer()
                 ->get(AppFactoryInterface::class)
-                    ->setConfig(
-                        $this->getConfig() //->node('app') //no separate node for app config anymore
-                    )
+                    // ->setConfig(
+                    //     $this->getConfig() //->node('app') //no separate node for app config anymore
+                    // )
                 ->create();
     }
 

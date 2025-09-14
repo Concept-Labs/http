@@ -4,27 +4,52 @@ namespace Concept\Http\Middleware;
 //use Psr\Http\Server\MiddlewareInterface;
 
 use Concept\Config\Config;
-use Concept\Config\ConfigInterface;
 use Concept\Config\Contract\ConfigurableInterface;
-use Concept\Config\Contract\ConfigurableTrait;
+use Concept\Http\App\Config\AppConfigInterface;
 use Traversable;
 
 class MiddlewareAggregator implements MiddlewareAggregatorInterface
 {
-    use ConfigurableTrait;
-
-    private ?MiddlewareWrapperInterface $middlewareWrapperPrototype = null;
-
     /**
      * Dependency injection
      * 
      * @param MiddlewareWrapperInterface $middleware
      */
-    public function __construct(MiddlewareWrapperInterface $middlewareWrapper)
+    public function __construct(
+        private MiddlewareWrapperInterface $middlewareWrapperPrototype,
+        private AppConfigInterface $appConfig
+    )
+    {}
+
+    /**
+     * Get the app config
+     * 
+     * @return AppConfigInterface
+     */
+    protected function getConfig(): AppConfigInterface
     {
-        $this->middlewareWrapperPrototype = $middlewareWrapper;
+        return $this->appConfig;
     }
 
+    /**
+     * Get the app config
+     * 
+     * @return AppConfigInterface
+     */
+    protected function getMiddlewareConfig(): iterable
+    {
+        if (!$this->appConfig->has(MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE)) {
+            throw new \RuntimeException(
+                sprintf(
+                    'No middleware configured: "%s" node not found',
+                    MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE
+                )
+            );
+        }
+
+        return $this->appConfig
+            ->get(MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE);
+    }
 
     /**
      * Aggregate the middleware
@@ -35,8 +60,7 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
     {
         $middlewareConfigStack = [];
 
-        foreach ($this->getConfig() as $id => $config) {
-            
+        foreach ($this->getMiddlewareConfig() as $id => $config) {
 
             /**
              * @todo: improve this
@@ -69,8 +93,8 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
 
         if ($middleware instanceof ConfigurableInterface) {
             /**
-             * @important!
-             * @todo: service factory will do this?
+              @important!
+              @todo: service factory will do this?
              */
             $middleware = $middleware->setConfig(Config::fromArray($config));
         }

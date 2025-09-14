@@ -4,7 +4,7 @@ namespace Concept\Http;
 use Concept\Config\Contract\ConfigurableInterface;
 use Concept\Singularity\Factory\ServiceFactoryInterface;
 
-interface AppFactoryInterface extends ServiceFactoryInterface, ConfigurableInterface
+interface AppFactoryInterface extends ServiceFactoryInterface
 {
     /**
      * Create an app instance

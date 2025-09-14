@@ -1,52 +1,74 @@
 <?php
 namespace Concept\Http\App;
 
-use Throwable;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Fig\Http\Message\StatusCodeInterface;
 
 use Concept\Http\AbstractApp;
 use Concept\Http\AppInterface;
-use Concept\Http\App\Event\StartEvent;
-use Concept\Http\App\Exception\HttpAppExceptionInterface;
 use Concept\Http\RequestHandler\MiddlewareStackHandlerInterface;
-use Concept\Http\Response\FlusherInterface;
-use Concept\EventDispatcher\EventBusInterface;
-use Concept\Config\ConfigInterface;
-use Concept\Config\Contract\ConfigurableTrait;
-use Concept\Http\App\Exception\NotHandledException;
-use Fig\Http\Message\StatusCodeInterface;
+use Concept\Http\App\Config\AppConfigInterface;
+use Concept\Http\App\Event\StartEvent;
+use Generator;
 
 /**
  * Class HttpApp
- * @package Concept\Http\App
+ * @package Concept\Http
  */
 
 class HttpApp extends AbstractApp implements AppInterface
 {
-
-    use ConfigurableTrait;
-
-    
     private ?ServerRequestInterface $serverRequest = null;
     private ?ResponseInterface $response = null;
 
+    /**
+     * @var MiddlewareInterface[][]
+     */
     protected array $middlewares = [];
 
+    /**
+     * Dependency injection
+     * 
+     * @param AppConfigInterface $config
+     * @param ServerRequestFactoryInterface $serverRequestFactory
+     * @param ResponseFactoryInterface $responseFactory
+     * @param MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype
+     * @param EventDispatcherInterface $eventDispatcher
+     */
     public function __construct(
+        private AppConfigInterface $config,
         private ServerRequestFactoryInterface $serverRequestFactory,
         private ResponseFactoryInterface $responseFactory,
-        private FlusherInterface $flusher,
         private MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype,
-        private EventBusInterface $eventBus
+        private EventDispatcherInterface $eventDispatcher
     ) {
-        $this->eventBus->dispatch(new StartEvent(
-            ['app' => $this]
+        $this->eventDispatcher->dispatch(new StartEvent(
+           ['app' => $this]
         ));
+    }
+
+    /**
+     * Run the application
+     */
+    public function run(): void
+    {
+        $this->processMiddlewareStack();
+    }
+
+    /**
+     * Get the application configuration
+     *
+     * @return AppConfigInterface
+     */
+    public function getConfig(): AppConfigInterface
+    {
+        return $this->config;
     }
 
     /**
@@ -63,7 +85,7 @@ class HttpApp extends AbstractApp implements AppInterface
     }
 
     /**
-     * Add middleware to the stack
+     * Add middleware to the stack`
      * @param MiddlewareInterface $middleware
      */
     public function addMiddleware(MiddlewareInterface $middleware, int $priority = 100, ?string $id = null ): static 
@@ -77,6 +99,7 @@ class HttpApp extends AbstractApp implements AppInterface
      * Get middleware by name
      * 
      * @param string $className
+     * 
      * @return MiddlewareInterface|null
      */
     public function getMiddleware(string $className): ?MiddlewareInterface
@@ -95,13 +118,12 @@ class HttpApp extends AbstractApp implements AppInterface
     /**
      * Get the middleware stack
      * 
-     * @return array
+     * @return Generator
      */
-    protected function getMiddlewareStack(): iterable
+    protected function getMiddlewareStack(): Generator
     {
         ksort($this->middlewares);
-        
-        
+
         foreach ($this->middlewares as $priority => $middlewares) {
             foreach ($middlewares as $middleware) {
                 yield $middleware;
@@ -109,38 +131,6 @@ class HttpApp extends AbstractApp implements AppInterface
         }
     }
 
-    public function configure(ConfigInterface $config): static
-    {
-        $this->setConfig($config);
-
-        return $this;
-    }
-
-    /**
-     * Run the application
-     */
-    public function run(): void
-    {
-        try {
-            // $this->eventBus
-            //     ->dispatch(
-            //         (new AppRunBefore())->attach('app', $this)
-            // );
-            $this->processMiddlewareStack()
-//                ->flush() //use response middleware instead
-            ;
-
-        } catch (HttpAppExceptionInterface $e) {
-
-            $this->handleAppException($e);
-
-        } catch (Throwable $e) {
-
-            $this->handleException($e);
-
-        }
-    }
-    
     /**
      * Process the middleware stack
      * 
@@ -149,27 +139,20 @@ class HttpApp extends AbstractApp implements AppInterface
     protected function processMiddlewareStack(): static
     {
         $stackHandler = $this
-            ->getMiddlewareStackHandlerPrototype()
+            ->getMiddlewareStackHandler()
             /**
              @todo: move final handler implementation to a dedicated middleware
              */
             ->withFinalHandler(
                 new class ($this->getResponseFactory()) implements RequestHandlerInterface {
-                    public function __construct(private ResponseFactoryInterface $responseFactory) {
-                        $this->responseFactory = $responseFactory;
-                    }
+                    public function __construct(private ResponseFactoryInterface $responseFactory) {}
                     public function handle(ServerRequestInterface $request): ResponseInterface {
-                        $response = $this->responseFactory->createResponse(StatusCodeInterface::STATUS_NOT_FOUND)
-                            // $response->getBody()
-                            // ->write('404 Not Found: No response generated. Check middleware stack.')
-                        ;
-                        return $response;
-                        // Alternatively, throw an exception here
+                        return $this->responseFactory->createResponse(StatusCodeInterface::STATUS_NOT_FOUND);
+                        // Alternatively, throw an exception
                         //throw new NotHandledException('No response generated.');
                     }
                 }
-            )
-            ;
+            );
         
         foreach ($this->getMiddlewareStack() as $middleware) {
             $stackHandler = $stackHandler->addMiddleware($middleware);
@@ -180,8 +163,6 @@ class HttpApp extends AbstractApp implements AppInterface
                 $this->getServerRequest()
             )
         );
-
-        //$this->flush();  //use flusher middleware instead
 
         return $this;
     }
@@ -209,26 +190,16 @@ class HttpApp extends AbstractApp implements AppInterface
      */
     protected function getServerUrl(): string
     {
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $host = $this->getConfig()->get('host') ?? $_SERVER['HTTP_HOST'] ?? 'localhost';
         $scheme = $_SERVER['REQUEST_SCHEME'] ?? 'http';
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
-        return $scheme . '://' . $host . $uri;
-    }
 
-    /**
-     * Built-in flusher of the response
-     * 
-     * @return static
-     */
-    protected function flush(): static
-    {
-        $this
-            ->getFlusher()
-                ->flush(
-                    $this->getResponse()
-                );
-
-        return $this;
+        return sprintf(
+            '%s://%s%s',
+            $scheme,
+            $host,
+            $uri
+        );
     }
 
     /**
@@ -239,16 +210,6 @@ class HttpApp extends AbstractApp implements AppInterface
     protected function getServerRequestFactory(): ServerRequestFactoryInterface
     {
         return $this->serverRequestFactory;
-    }
-
-    /**
-     * Get the middleware stack handler prototype
-     * 
-     * @return MiddlewareStackHandlerInterface
-     */
-    protected function getMiddlewareStackHandlerPrototype(): MiddlewareStackHandlerInterface
-    {
-        return clone $this->middlewareStackHandlerPrototype;
     }
 
     /**
@@ -286,42 +247,13 @@ class HttpApp extends AbstractApp implements AppInterface
     }
 
     /**
-     * Get the flusher
-     * @return FlusherInterface
-     */
-    protected function getFlusher(): FlusherInterface
-    {
-        return $this->flusher;
-    }
-
-    /**
-     * Handle application exception
+     * Get the middleware stack handler prototype
      * 
-     * @param HttpAppExceptionInterface $e
+     * @return MiddlewareStackHandlerInterface
      */
-    protected function handleAppException(HttpAppExceptionInterface $e): void
+    protected function getMiddlewareStackHandler(): MiddlewareStackHandlerInterface
     {
-        /**
-         * @todo Implement this method
-         */
-        $response = $this->getResponseFactory()->createResponse(500);
-        $response->getBody()->write($e->getMessage() . PHP_EOL . $e->getTraceAsString());
-        $this->getFlusher()->flush($response);
-    }
-
-    /**
-     * Handle exception
-     * 
-     * @param Throwable $e
-     */
-    protected function handleException(Throwable $e): void
-    {
-        /**
-         * @todo Implement this method
-         */
-        $response = $this->getResponseFactory()->createResponse(500);
-        $response->getBody()->write('Internal Server Error:' . $e->getMessage() . PHP_EOL . $e->getTraceAsString());
-        $this->getFlusher()->flush($response);
+        return $this->middlewareStackHandlerPrototype;
     }
 
 }

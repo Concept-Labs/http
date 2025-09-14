@@ -1,51 +1,75 @@
 <?php
 namespace Concept\Http\App;
 
-use Psr\Container\ContainerInterface;
-use Psr\EventDispatcher\EventDispatcherInterface;
-use Concept\Http\AppFactoryInterface;
 use Concept\Http\AppInterface;
-use Concept\Config\ConfigInterface;
-use Concept\Config\Contract\ConfigurableTrait;
+use Concept\Http\AppFactoryInterface;
+use Concept\Http\App\Config\AppConfigInterface;
 use Concept\Http\Middleware\MiddlewareAggregatorInterface;
-use Concept\Singularity\Factory\FactoryInterface;
 use Concept\Singularity\Factory\ServiceFactory;
-use Concept\Singularity\Context\ProtoContextInterface;
+use Concept\Singularity\Contract\Initialization\InjectableInterface;
+use Concept\Singularity\Plugin\Attribute\Injector;
 
-class AppFactory extends ServiceFactory implements AppFactoryInterface
+class AppFactory extends ServiceFactory implements AppFactoryInterface, InjectableInterface
 {
 
-    use ConfigurableTrait;
+    //use ConfigurableTrait;
 
-    protected ?AppInterface $app = null;
-    
+    private ?AppInterface $app = null;
+    private ?AppConfigInterface $config = null;
+    private ?MiddlewareAggregatorInterface $middlewareAggregator = null;
+
     /**
      * Dependency injection
      * 
-     * @param FactoryInterface $factory
+     * @param AppConfigInterface $config
      * @param MiddlewareAggregatorInterface $middlewareAggregator
+     * 
+     * @return void
      */
-    public function __construct(
-        ContainerInterface $container,
-        ProtoContextInterface $context,
-        private MiddlewareAggregatorInterface $middlewareAggregator,
-        private EventDispatcherInterface $eventDispatcher
-    )
+    #[Injector]
+    public function depends(
+        AppConfigInterface $config, 
+        MiddlewareAggregatorInterface $middlewareAggregator
+    ): void
     {
-        parent::__construct($container, $context);
+        $this->config = $config;
+        $this->middlewareAggregator = $middlewareAggregator;
     }
 
-
-    /**
+     /**
      * {@inheritDoc}
      */
     public function create(array $args = []): AppInterface
     {
+        // Create the app instance
         return $this
-            ->createAppInstance($args)
-            //->
-            ->middlewareAggregate()
-            ->getAppInstance();
+            ->createAppInstance($args) // Step 1: Create app instance
+            ->aggregateMiddleware()    // Step 2: Aggregate middleware stack
+            ->getAppInstance();        // Step 3: Return app instance
+    }
+
+    /**
+     * Get the app config
+     * 
+     * @return AppConfigInterface
+     */
+    protected function getConfig(): AppConfigInterface
+    {
+        return $this->config;
+    }
+
+    /**
+     * Get the app
+     * 
+     * @return AppInterface
+     */
+    protected function getAppInstance(): AppInterface
+    {
+        if (null === $this->app) {
+            throw new \RuntimeException('App instance has not been created. Call createAppInstance() first.');
+        }
+
+        return $this->app;
     }
 
     /**
@@ -56,8 +80,7 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
     protected function createAppInstance(array $args = []): static
     {
         $this->app = $this
-            ->createService(AppInterface::class, $args)
-            ->setConfig($this->getConfig());
+            ->createService(AppInterface::class, $args);
 
         return $this;
     }
@@ -67,12 +90,9 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
      * 
      * @return static
      */
-    protected function middlewareAggregate(): static
+    protected function aggregateMiddleware(): static
     {
-        $middlewareAggregator = $this->getMiddlewareAggregator()
-            ->setConfig($this->getMiddlewareConfig());
-
-        foreach ($middlewareAggregator as $middleware) {
+        foreach ($this->getMiddlewareAggregator() as $middleware) {
             $this
                 ->getAppInstance()
                 ->addMiddleware($middleware);
@@ -80,7 +100,6 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
 
         return $this;
     }
-
 
     /**
      * Get the middleware aggregator
@@ -92,37 +111,5 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface
         return $this->middlewareAggregator;
     }
 
-    /**
-     * Get the middleware config
-     * 
-     * @return ConfigInterface
-     */
-    protected function getMiddlewareConfig(): ConfigInterface
-    {
-        if (!$this->getConfig()->has(MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE)) {
-            throw new \RuntimeException(
-                sprintf(
-                    'No middleware configured: "%s" node not found',
-                    MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE
-                )
-            );
-        }
-
-        return $this->getConfig()
-            ->node(MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE);
-    }
-
-    /**
-     * Get the app
-     * 
-     * @return AppInterface
-     */
-    protected function getAppInstance(): AppInterface
-    {
-        if (null === $this->app) {
-            throw new \RuntimeException('App not created');
-        }
-
-        return $this->app;
-    }
+    
 }

@@ -19,7 +19,6 @@ class MiddlewareWrapper implements MiddlewareWrapperInterface, PrototypeInterfac
 {
     use ConfigurableTrait;
 
-    private ?FactoryInterface $factory = null;
     private ?MiddlewareInterface $middleware = null;
 
 
@@ -29,9 +28,8 @@ class MiddlewareWrapper implements MiddlewareWrapperInterface, PrototypeInterfac
      * @param FactoryInterface $factory
      * @param string $preference
      */
-    public function __construct(FactoryInterface $factory)
+    public function __construct(private FactoryInterface $factory)
     {
-        $this->factory = $factory;
     }
 
     public function __clone()
@@ -67,6 +65,7 @@ class MiddlewareWrapper implements MiddlewareWrapperInterface, PrototypeInterfac
                 ->create(
                     $this->getPreference()
                 );
+                
             if ($this->middleware instanceof ConfigurableInterface) {
                 $this->middleware = $this->middleware->setConfig($this->getConfig());
             }

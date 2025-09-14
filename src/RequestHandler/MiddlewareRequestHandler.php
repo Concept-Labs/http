@@ -47,18 +47,9 @@ class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface
      *
      * @param ServerRequestInterface $request
      * @return ResponseInterface
-     * @throws HttpRuntimeException
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if ($this->getMiddleware() === null) {
-            throw new HttpRuntimeException('No middleware configured');
-        }
-
-        if ($this->getHandler() === null) {
-            throw new HttpRuntimeException('No handler configured');
-        }
-
         return $this
             ->getMiddleware()
                 ->process(
@@ -81,7 +72,6 @@ class MiddlewareRequestHandler implements MiddlewareRequestHandlerInterface
      * Get the middleware
      *
      * @return MiddlewareInterface
-     * @throws HttpRuntimeException
      */
     protected function getMiddleware(): MiddlewareInterface
     {

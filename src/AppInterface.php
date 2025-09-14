@@ -6,7 +6,7 @@ use Concept\EventDispatcher\EventDispatcherAwareInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 
-interface AppInterface extends ConfigurableInterface
+interface AppInterface
 {
 
     /**

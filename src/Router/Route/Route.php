@@ -11,16 +11,15 @@ class Route implements RouteInterface
 
     use ConfigurableTrait;
 
-    private ?RouteHandlerInterface $routeHandlerPrototype = null;
-
-    public function __construct(RouteHandlerInterface $handler)
-    {
-        $this->routeHandlerPrototype = $handler;
-    }
+    public function __construct(private RouteHandlerInterface $routeHandlerPrototype)
+    {}
 
 
     /**
      * {@inheritDoc}
+     */
+    /**
+     @todo: static
      */
     public function match(ServerRequestInterface $request): bool
     {
@@ -71,7 +70,7 @@ class Route implements RouteInterface
     protected function extractParameters(ServerRequestInterface $request): ServerRequestInterface
     {
         $routePath = $this->getPath();
-        $path = $request->getUri()->getPath();
+        $path = rtrim($request->getUri()->getPath(), '/');
 
         // Відповідність параметрів маршруту запиту
         if (preg_match($this->buildRouteRegex($routePath), $path, $matches)) {

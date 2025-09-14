@@ -2,7 +2,6 @@
 namespace Concept\Http\Router\Route\Handler;
 
 use Psr\Http\Server\RequestHandlerInterface;
-use Concept\Config\Contract\ConfigurableInterface;
 use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Singularity\Config\ConfigNodeInterface;
 use Concept\Singularity\Factory\ServiceFactory;
@@ -23,9 +22,9 @@ class HandlerFactory extends ServiceFactory implements HandlerFactoryInterface
             /**
              @todo remove because router sets config on handler
              */
-        if ($handler instanceof ConfigurableInterface) {
-            $handler = $handler->setConfig($this->getConfig());
-        }
+        // if ($handler instanceof ConfigurableInterface) {
+        //     $handler = $handler->setConfig($this->getConfig());
+        // }
         
         return $handler;
     }
@@ -39,8 +38,7 @@ class HandlerFactory extends ServiceFactory implements HandlerFactoryInterface
     {
         return $this
             ->getConfig()
-            ->get(ConfigNodeInterface::NODE_PREFERENCE);
+            ->get(ConfigNodeInterface::NODE_PREFERENCE) ?? throw new \RuntimeException("Handler preference not set");
     }
-
 
 }

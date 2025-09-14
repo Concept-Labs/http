@@ -9,17 +9,19 @@ abstract class RequestHandler implements RequestHandlerInterface
     /**
      * @var ResponseFactoryInterface
      */
+    private ?ResponseFactoryInterface $responseFactory = null;
     protected ?ResponseInterface $response = null;
 
     /**
-     * Dependency injection constructor
-     *
-     * @param ResponseFactoryInterface $responseFactory
+     * {@inheritDoc}
      */
-    public function __construct(protected ResponseFactoryInterface $responseFactory)
+    public function withResponseFactory(ResponseFactoryInterface $responseFactory): static
     {
+        $this->responseFactory = $responseFactory;
+
+        return $this;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -35,7 +37,7 @@ abstract class RequestHandler implements RequestHandlerInterface
      */
     protected function getResponseFactory(): ResponseFactoryInterface
     {
-        return $this->responseFactory;
+        return $this->responseFactory ?? throw new \RuntimeException('Response factory not set.');
     }
 
 }

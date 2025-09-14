@@ -6,28 +6,36 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Concept\Config\Contract\ConfigurableInterface;
 use Concept\Config\Contract\ConfigurableTrait;
+use Psr\Http\Message\ResponseFactoryInterface;
 
 class RouteHandler implements RouteHandlerInterface
 {
     use ConfigurableTrait;
 
+    /**
+     * The request handler instance
+     * 
+     * @var RequestHandlerInterface|null
+     */
     protected ?RequestHandlerInterface $requestHandler = null;
 
     /**
      * Dependency injection
      * 
-     * @param HandlerFactoryInterface $factory
+     * @param HandlerFactoryInterface $handlerFactory
      */
-    public function __construct(protected HandlerFactoryInterface $factory)
-    {
-    }
+    public function __construct(
+        private HandlerFactoryInterface $handlerFactory,
+        private ResponseFactoryInterface $responseFactory
+        )
+    {}
 
     /**
      * {@inheritDoc}
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->createHandler()
+        return $this->getHandler()
             ->handle($request);
     }
 
@@ -36,7 +44,7 @@ class RouteHandler implements RouteHandlerInterface
      * 
      * @return RequestHandlerInterface
      */
-    protected function createHandler(): RequestHandlerInterface
+    protected function getHandler(): RequestHandlerInterface
     {
         if ($this->requestHandler === null) {
             $factory = $this
@@ -46,7 +54,8 @@ class RouteHandler implements RouteHandlerInterface
                 $factory->setConfig($this->getConfig());
             }
 
-            $this->requestHandler = $factory->create();
+            $this->requestHandler = $factory->create()
+                ->withResponseFactory($this->responseFactory);
 
             if ($this->requestHandler instanceof ConfigurableInterface) {
                 //pass the configuration to the handler
@@ -58,12 +67,12 @@ class RouteHandler implements RouteHandlerInterface
     }
 
     /**
-     * Get the factory
+     * Get the Handler factory
      * 
      * @return HandlerFactoryInterface
      */
     protected function getHandlerFactory(): HandlerFactoryInterface
     {
-        return $this->factory;
+        return $this->handlerFactory;
     }
 }

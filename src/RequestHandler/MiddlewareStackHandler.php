@@ -20,16 +20,10 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
     private ?RequestHandlerInterface $finalHandler = null;
 
     /**
-     * @var MiddlewareRequestHandlerInterface
-     */
-    private ?MiddlewareRequestHandlerInterface $middlewareRequestHandlerPrototype = null;
-
-    /**
      * Dependency injection constructor
      */
-    public function __construct(MiddlewareRequestHandlerInterface $middlewareRequestHandler)
+    public function __construct(private MiddlewareRequestHandlerInterface $middlewareRequestHandlerPrototype)
     {
-        $this->middlewareRequestHandlerPrototype = $middlewareRequestHandler;
     }
 
     /**
@@ -62,16 +56,6 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
     }
 
     /**
-     * Get the middleware collection
-     * 
-     * @return MiddlewareInterface[]
-     */
-    protected function getMiddleWareCollection(): array
-    {
-        return $this->middlewares;
-    }
-
-    /**
      * Handle the request
      * 
      * @param ServerRequestInterface $request
@@ -86,7 +70,7 @@ class MiddlewareStackHandler implements MiddlewareStackHandlerInterface
             $handler = $this->getMiddelwareRequestHandlerPrototype()
                 ->withMiddleware($middleware)
                 ->withHandler($handler)
-                ;
+            ;
         }
 
         return $handler->handle($request);

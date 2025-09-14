@@ -8,22 +8,14 @@ use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Http\Router\Route\RouteInterface;
 use Traversable;
 
+
+/**
+ @todo: refactor the aggregator, use static Route::match()
+ */
 class RouteAggregator implements RouteAggregatorInterface
 {
  
     use ConfigurableTrait;
-
-    // private ?ConfigurableRouteFactoryInterface $routeFactory = null;
-
-    // /**
-    //  * Dependency injection
-    //  * 
-    //  * @param ConfigurableRouteFactoryInterface $routeFactory
-    //  */
-    // public function __construct(ConfigurableRouteFactoryInterface $routeFactory)
-    // {
-    //     $this->routeFactory = $routeFactory;
-    // }
 
     private ?RouteInterface $routePrototype = null;
 
@@ -61,35 +53,13 @@ class RouteAggregator implements RouteAggregatorInterface
     protected function aggregate(): Traversable
     {
         foreach ($this->getConfig() as $path => $routeConfigData) {
+            //$node = $this->getConfig()->node($path);//->set('path', $path);
             yield $this->createRoute(
+                //$node
                 Config::fromArray($routeConfigData + ['path' => $path])
             );
         }
     }
-
-    /**
-     * Create a route
-     * 
-     * @param ConfigInterface $config
-     * @return object
-     */
-    // protected function createRoute(ConfigInterface $config): object
-    // {
-    //     $routeFactory = $this->getRouteFactory()
-    //         ->setConfig($config);
-        
-    //     return $routeFactory->create();
-    // }
-
-    /**
-     * Get the route factory
-     * 
-     * @return ConfigurableRouteFactoryInterface
-     */
-    // protected function getRouteFactory(): ConfigurableRouteFactoryInterface
-    // {
-    //     return $this->routeFactory;
-    // }
 
     /**
      * {@inheritDoc}
