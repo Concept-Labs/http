@@ -1,4 +1,5 @@
 # At beggining
+- this package is part of Concept-labs ecosystem with core "Singularity" psr-11 DI container (https://github.com/Concept-Labs/singularity)
 - deep code investigation for full understanding of whole code logic, coding dialect and style
 # Code 
 - must be clean
