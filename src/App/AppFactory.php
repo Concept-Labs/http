@@ -9,21 +9,25 @@ use Concept\Singularity\Factory\ServiceFactory;
 use Concept\Singularity\Contract\Initialization\InjectableInterface;
 use Concept\Singularity\Plugin\Attribute\Injector;
 
+/**
+ * Application Factory
+ * 
+ * Creates and configures HTTP application instances with middleware aggregation.
+ * Uses Singularity DI for automatic dependency injection.
+ */
 class AppFactory extends ServiceFactory implements AppFactoryInterface, InjectableInterface
 {
-
-    //use ConfigurableTrait;
-
     private ?AppInterface $app = null;
     private ?AppConfigInterface $config = null;
     private ?MiddlewareAggregatorInterface $middlewareAggregator = null;
 
     /**
-     * Dependency injection
+     * Dependency injection method
      * 
-     * @param AppConfigInterface $config
-     * @param MiddlewareAggregatorInterface $middlewareAggregator
+     * Automatically called by Singularity DI container to inject dependencies.
      * 
+     * @param AppConfigInterface $config Application configuration
+     * @param MiddlewareAggregatorInterface $middlewareAggregator Middleware aggregator
      * @return void
      */
     #[Injector]
@@ -36,8 +40,14 @@ class AppFactory extends ServiceFactory implements AppFactoryInterface, Injectab
         $this->middlewareAggregator = $middlewareAggregator;
     }
 
-     /**
-     * {@inheritDoc}
+    /**
+     * Create an application instance
+     * 
+     * Creates the app, aggregates middleware from configuration,
+     * and returns the configured application.
+     * 
+     * @param array<string, mixed> $args Additional creation arguments
+     * @return AppInterface The configured application instance
      */
     public function create(array $args = []): AppInterface
     {

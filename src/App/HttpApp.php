@@ -131,7 +131,10 @@ class HttpApp extends AbstractApp implements AppInterface
     }
 
     /**
-     * Process the middleware stack
+     * Process the middleware stack and generate response
+     * 
+     * Creates a middleware stack handler with a final handler that returns 404.
+     * The final handler is a fallback when no middleware generates a response.
      * 
      * @return static
      */
@@ -139,16 +142,11 @@ class HttpApp extends AbstractApp implements AppInterface
     {
         $stackHandler = $this
             ->getMiddlewareStackHandler()
-            /**
-             @todo: move final handler implementation to a dedicated middleware
-             */
             ->withFinalHandler(
                 new class ($this->getResponseFactory()) implements RequestHandlerInterface {
                     public function __construct(private ResponseFactoryInterface $responseFactory) {}
                     public function handle(ServerRequestInterface $request): ResponseInterface {
                         return $this->responseFactory->createResponse(StatusCodeInterface::STATUS_NOT_FOUND);
-                        // Alternatively, throw an exception
-                        //throw new NotHandledException('No response generated.');
                     }
                 }
             );
@@ -182,10 +180,12 @@ class HttpApp extends AbstractApp implements AppInterface
     }
 
     /**
-     * Get the server URL
-     @todo: improve this
+     * Get the server URL from request parameters
      * 
-     * @return string
+     * Constructs the server URL from $_SERVER variables or configuration.
+     * Falls back to sensible defaults if variables are not set.
+     * 
+     * @return string The complete server URL
      */
     protected function getServerUrl(): string
     {

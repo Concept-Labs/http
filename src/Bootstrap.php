@@ -82,62 +82,44 @@ class Bootstrap
     /**
      * Get the configuration
      * 
+     * Loads configuration from files using the ConfigFactory with registered plugins.
+     * Supports configuration caching in var/config.php for improved performance.
+     * 
      * @return ConfigInterface
      */
     protected function getConfig(): ConfigInterface
     {
         if (!$this->config instanceof ConfigInterface) {
-            if (file_exists($this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php')) {
-                $cfg = require $this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php';
+            // Check for cached configuration
+            $cachedConfig = $this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php';
+            if (file_exists($cachedConfig)) {
+                $cfg = require $cachedConfig;
                 return $this->config = (new ConfigFactory(AppConfig::class))->fromArray($cfg);
             }
 
-            /**
-             @todo compiled
-             */
-            // $compiled = $this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php';
-            // if (file_exists($compiled)) {
-            //     $cfg = require $compiled;
-            //     return $this->config = new Config($cfg);
-            // }
-
-            /**
-               basics
-               @todo: improve context creation
-             */
+            // Build context for configuration parsing
             $context = [
                 'BASE' => $this->getBase(),
                 'VENDOR' => Composer::getVendorDir(),
             ];
 
+            // Create configuration with plugins
+            // Plugins are executed in priority order (higher = first)
             $this->config = (new ConfigFactory(AppConfig::class))
                 ->withContext($context)
                 ->withGlob($this->getBase() . DIRECTORY_SEPARATOR . $this->getConfigSrc())
-                
-                /**
-                   @todo: register singularity (container) plugin separately
-                 */
-                ->withPlugin(ComposerPlugin::class) // register the Singularity Composer plugin
-
-                ->withPlugin(CommentPlugin::class, 996)
-                ->withPlugin(EnvPlugin::class, 999)
-                ->withPlugin(ContextPlugin::class, 998)
-                ->withPlugin(IncludePlugin::class, 997)
-                ->withPlugin(ImportPlugin::class, 996)
-                ->withPlugin(ReferencePlugin::class, 995)
-                ->withPlugin(ConfigValuePlugin::class, 994)
-                ->withPlugin(ExtendsPlugin::class, 993)
-
+                ->withPlugin(ComposerPlugin::class)       // Singularity DI integration
+                ->withPlugin(EnvPlugin::class, 999)       // ${ENV_VAR} support
+                ->withPlugin(ContextPlugin::class, 998)   // ${CONTEXT_VAR} support
+                ->withPlugin(IncludePlugin::class, 997)   // @include directive
+                ->withPlugin(ImportPlugin::class, 996)    // @import directive
+                ->withPlugin(CommentPlugin::class, 996)   // Comment handling
+                ->withPlugin(ReferencePlugin::class, 995) // @reference directive
+                ->withPlugin(ConfigValuePlugin::class, 994) // Config value parsing
+                ->withPlugin(ExtendsPlugin::class, 993)   // @extends directive
                 ->create()
             ;
         }
-
-         //$this->config->export($this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php');
-         //Debug::dd($this->config->only('layouts.*'));
-         //Debug::dd($this->config->toArray());
-
-
-        //$this->config->export($this->getBase() . DIRECTORY_SEPARATOR . 'var/config.json');
 
         return $this->config;
     }
