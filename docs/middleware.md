@@ -128,26 +128,26 @@ $app->addMiddleware(
 
 ### Route-Specific Middleware
 
-```php
-[
-    'routes' => [
-        '/admin/dashboard' => [
-            'method' => 'GET',
-            'handler' => [
-                'preference' => 'App\\Handler\\AdminDashboard',
-                'middleware' => [
-                    'auth' => [
-                        'preference' => 'App\\Middleware\\AuthMiddleware',
-                        'priority' => 100,
-                        'config' => [
-                            'role' => 'admin',
-                        ],
-                    ],
-                ],
-            ],
-        ],
-    ],
-]
+```json
+{
+    "route": {
+        "/admin/dashboard": {
+            "method": ["GET"],
+            "handler": {
+                "preference": "App\\Handler\\AdminDashboard",
+                "middleware": {
+                    "auth": {
+                        "preference": "App\\Middleware\\AuthMiddleware",
+                        "priority": 100,
+                        "config": {
+                            "role": "admin"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 ```
 
 ## Middleware Priority

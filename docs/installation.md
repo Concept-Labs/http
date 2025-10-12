@@ -53,7 +53,7 @@ use Concept\Http\Bootstrap;
 
 $bootstrap = new Bootstrap(
     base: dirname(__DIR__),
-    configSource: 'config/*.php'
+    configSource: 'config/*.json'
 );
 
 $app = $bootstrap->app();
@@ -62,31 +62,29 @@ $app->run();
 
 ### 2. Create Configuration
 
-Create `config/app.php`:
+Create `config/app.json`:
 
-```php
-<?php
-return [
-    'app' => [
-        'name' => 'My Application',
-    ],
+```json
+{
+    "app": {
+        "name": "My Application"
+    },
     
-    'middleware' => [
-        [
-            'preference' => 'Concept\\Http\\Router\\RouterInterface',
-            'priority' => 100,
-        ],
-    ],
-    
-    'routes' => [
-        '/' => [
-            'method' => 'GET',
-            'handler' => [
-                'preference' => 'App\\Handler\\HomeHandler',
-            ],
-        ],
-    ],
-];
+    "middleware": {
+        "router": {
+            "preference": "Concept\\Http\\Router\\RouterInterface",
+            "priority": 100,
+            "route": {
+                "/": {
+                    "method": ["GET"],
+                    "handler": {
+                        "preference": "App\\Handler\\HomeHandler"
+                    }
+                }
+            }
+        }
+    }
+}
 ```
 
 ## Next Steps

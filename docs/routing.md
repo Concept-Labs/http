@@ -12,41 +12,57 @@ The routing system provides flexible, pattern-based URL routing with:
 
 ### Simple Route
 
-```php
-[
-    'routes' => [
-        '/' => [
-            'method' => 'GET',
-            'handler' => [
-                'preference' => 'App\\Handler\\HomeHandler',
-            ],
-        ],
-    ],
-]
+Router is configured as middleware with routes in the "route" subnode:
+
+```json
+{
+    "middleware": {
+        "router": {
+            "preference": "Concept\\Http\\Router\\RouterInterface",
+            "priority": 10,
+            "route": {
+                "/": {
+                    "method": ["GET"],
+                    "handler": {
+                        "preference": "App\\Handler\\HomeHandler"
+                    }
+                }
+            }
+        }
+    }
+}
 ```
 
 ### Multiple Methods
 
-```php
-'/api/users' => [
-    'method' => ['GET', 'POST'],
-    'handler' => [
-        'preference' => 'App\\Handler\\UserListHandler',
-    ],
-],
+```json
+{
+    "route": {
+        "/api/users": {
+            "method": ["GET", "POST"],
+            "handler": {
+                "preference": "App\\Handler\\UserListHandler"
+            }
+        }
+    }
+}
 ```
 
 ## Dynamic Parameters
 
 ### Path Parameters
 
-```php
-'/users/{id}' => [
-    'method' => 'GET',
-    'handler' => [
-        'preference' => 'App\\Handler\\UserHandler',
-    ],
-],
+```json
+{
+    "route": {
+        "/users/{id}": {
+            "method": ["GET"],
+            "handler": {
+                "preference": "App\\Handler\\UserHandler"
+            }
+        }
+    }
+}
 ```
 
 Access parameters in handler:
@@ -64,55 +80,69 @@ public function handle(ServerRequestInterface $request): ResponseInterface
 
 ### Optional Parameters
 
-```php
-'/users/{id}/posts/{postId?}' => [
-    'method' => 'GET',
-    'handler' => [...],
-],
+```json
+{
+    "route": {
+        "/users/{id}/posts/{postId?}": {
+            "method": ["GET"],
+            "handler": {}
+        }
+    }
+}
 ```
 
 ## RESTful Routes
 
-```php
-[
-    'routes' => [
-        '/api/users' => [
-            'method' => ['GET', 'POST'],
-            'handler' => [
-                'preference' => 'App\\Handler\\UserCollectionHandler',
-            ],
-        ],
-        '/api/users/{id}' => [
-            'method' => ['GET', 'PUT', 'DELETE'],
-            'handler' => [
-                'preference' => 'App\\Handler\\UserResourceHandler',
-            ],
-        ],
-    ],
-]
+```json
+{
+    "middleware": {
+        "router": {
+            "preference": "Concept\\Http\\Router\\RouterInterface",
+            "priority": 10,
+            "route": {
+                "/api/users": {
+                    "method": ["GET", "POST"],
+                    "handler": {
+                        "preference": "App\\Handler\\UserCollectionHandler"
+                    }
+                },
+                "/api/users/{id}": {
+                    "method": ["GET", "PUT", "DELETE"],
+                    "handler": {
+                        "preference": "App\\Handler\\UserResourceHandler"
+                    }
+                }
+            }
+        }
+    }
+}
 ```
 
 ## Route Middleware
 
 Add middleware to specific routes:
 
-```php
-'/admin/dashboard' => [
-    'method' => 'GET',
-    'handler' => [
-        'preference' => 'App\\Handler\\AdminDashboard',
-        'middleware' => [
-            'auth' => [
-                'preference' => 'App\\Middleware\\AuthMiddleware',
-                'priority' => 100,
-            ],
-            'admin' => [
-                'preference' => 'App\\Middleware\\AdminMiddleware',
-                'priority' => 90,
-            ],
-        ],
-    ],
-],
+```json
+{
+    "route": {
+        "/admin/dashboard": {
+            "method": ["GET"],
+            "handler": {
+                "preference": "App\\Handler\\AdminDashboard",
+                "middleware": {
+                    "auth": {
+                        "preference": "App\\Middleware\\AuthMiddleware",
+                        "priority": 100
+                    },
+                    "admin": {
+                        "preference": "App\\Middleware\\AdminMiddleware",
+                        "priority": 90
+                    }
+                }
+            }
+        }
+    }
+}
 ```
 
 ## Route Patterns
@@ -201,25 +231,42 @@ class UserResourceHandler implements RequestHandlerInterface
 
 ### Route Groups (via configuration)
 
-```php
-// config/routes-api.php
-return [
-    'routes' => [
-        '/api/v1/users' => [...],
-        '/api/v1/posts' => [...],
-    ],
-];
+Use @import directive to organize routes:
 
-// config/routes-admin.php
-return [
-    'routes' => [
-        '/admin/dashboard' => [...],
-        '/admin/users' => [...],
-    ],
-];
+```json
+{
+    "middleware": {
+        "router": {
+            "preference": "Concept\\Http\\Router\\RouterInterface",
+            "priority": 10,
+            "@import": [
+                "${BASE}/config/routes-api.json",
+                "${BASE}/config/routes-admin.json"
+            ]
+        }
+    }
+}
 ```
 
-Load both with glob pattern: `config/routes-*.php`
+File: `config/routes-api.json`
+```json
+{
+    "route": {
+        "/api/v1/users": {},
+        "/api/v1/posts": {}
+    }
+}
+```
+
+File: `config/routes-admin.json`
+```json
+{
+    "route": {
+        "/admin/dashboard": {},
+        "/admin/users": {}
+    }
+}
+```
 
 ## Error Handling
 

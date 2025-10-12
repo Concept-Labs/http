@@ -13,7 +13,6 @@ class Bootstrap
 **Constructor Parameters:**
 - `string $base` - Base path of the application (required)
 - `string $configSource` - Configuration source path or glob pattern (required)
-- `?ContainerInterface $container` - Optional PSR-11 container (default: Singularity)
 
 **Methods:**
 
@@ -29,7 +28,7 @@ public function app(): AppInterface
 ```php
 $bootstrap = new Bootstrap(
     base: __DIR__,
-    configSource: 'config/*.php'
+    configSource: 'config/*.json'
 );
 $app = $bootstrap->app();
 ```
@@ -146,14 +145,17 @@ public function handle(ServerRequestInterface $request): ResponseInterface
 
 **Configuration:**
 
-```php
-[
-    'path' => '/users/{id}',
-    'method' => ['GET', 'PUT'],
-    'handler' => [
-        'preference' => 'App\\Handler\\UserHandler',
-    ],
-]
+```json
+{
+    "route": {
+        "/users/{id}": {
+            "method": ["GET", "PUT"],
+            "handler": {
+                "preference": "App\\Handler\\UserHandler"
+            }
+        }
+    }
+}
 ```
 
 ---
@@ -263,12 +265,11 @@ class AppConfig extends Config implements AppConfigInterface, SharedInterface
 
 **Configuration Structure:**
 
-```php
-[
-    'app' => [...],           // Application settings
-    'middleware' => [...],    // Middleware configuration
-    'routes' => [...],        // Routes configuration
-]
+```json
+{
+    "app": {},
+    "middleware": {}
+}
 ```
 
 ---
@@ -375,24 +376,24 @@ Base exception for router errors.
 
 ### Configuration Nodes
 
-```php
+```json
 // Middleware configuration node
-MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE = 'middleware'
+MiddlewareAggregatorInterface::CONFIG_NODE_MIDDLEWARE = "middleware"
 
-// Route configuration node
-RouterInterface::CONFIG_ROUTE_NODE = 'routes'
+// Route configuration node (within router middleware)
+RouterInterface::CONFIG_ROUTE_NODE = "route"
 
 // Route path configuration
-RouteInterface::CONFIG_PATH_NODE = 'path'
+RouteInterface::CONFIG_PATH_NODE = "path"
 
 // Route method configuration
-RouteInterface::CONFIG_METHOD_NODE = 'method'
+RouteInterface::CONFIG_METHOD_NODE = "method"
 
 // Route handler configuration
-RouteInterface::CONFIG_HANDLER_NODE = 'handler'
+RouteInterface::CONFIG_HANDLER_NODE = "handler"
 
 // Singularity preference node
-ConfigNodeInterface::NODE_PREFERENCE = 'preference'
+ConfigNodeInterface::NODE_PREFERENCE = "preference"
 ```
 
 ---
@@ -401,32 +402,31 @@ ConfigNodeInterface::NODE_PREFERENCE = 'preference'
 
 ### Middleware Configuration
 
-```php
-[
-    'preference' => 'string',     // Fully qualified class name
-    'priority' => 'int',          // Execution priority (optional)
-    'config' => 'array',          // Middleware configuration (optional)
-]
+```json
+{
+    "preference": "string",
+    "priority": 100,
+    "config": {}
+}
 ```
 
 ### Route Configuration
 
-```php
-[
-    'path' => 'string',           // Route path pattern
-    'method' => 'string|array',   // HTTP method(s)
-    'handler' => [                // Handler configuration
-        'preference' => 'string', // Handler class
-        'config' => 'array',      // Handler config (optional)
-        'middleware' => [         // Route middleware (optional)
-            'id' => [             // Middleware definition
-                'preference' => 'string',
-                'priority' => 'int',
-                'config' => 'array',
-            ],
-        ],
-    ],
-]
+```json
+{
+    "method": ["GET"],
+    "handler": {
+        "preference": "string",
+        "config": {},
+        "middleware": {
+            "id": {
+                "preference": "string",
+                "priority": 100,
+                "config": {}
+            }
+        }
+    }
+}
 ```
 
 ---

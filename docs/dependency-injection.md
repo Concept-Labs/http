@@ -16,18 +16,12 @@ Services are registered in `concept.json`:
 
 ```json
 {
-    "singularity": {
-        "package": {
-            "your-vendor/your-package": {
-                "preference": {
-                    "App\\Repository\\UserRepositoryInterface": {
-                        "class": "App\\Repository\\UserRepository"
-                    },
-                    "App\\Service\\AuthService": {
-                        "class": "App\\Service\\AuthService"
-                    }
-                }
-            }
+    "preference": {
+        "App\\Repository\\UserRepositoryInterface": {
+            "class": "App\\Repository\\UserRepository"
+        },
+        "App\\Service\\AuthService": {
+            "class": "App\\Service\\AuthService"
         }
     }
 }
@@ -64,14 +58,14 @@ class UserHandler implements RequestHandlerInterface
 
 ### Shared (Singleton)
 
-Single instance shared across application:
+Single instance shared across application using the `shared` configuration or implementing `SharedInterface`:
 
 ```json
 {
     "preference": {
         "App\\Service\\CacheService": {
             "class": "App\\Service\\CacheService",
-            "lifecycle": "shared"
+            "shared": true
         }
     }
 }
@@ -217,21 +211,34 @@ return [
 
 ## Advanced Patterns
 
-### Service Locator Pattern
+### Factory Pattern
+
+Use factories to create complex services:
 
 ```php
 <?php
-use Psr\Container\ContainerInterface;
+namespace App\Factory;
 
-class ServiceLocator
+use Concept\Singularity\Factory\ServiceFactory;
+use App\Handler\UserHandler;
+
+class UserHandlerFactory extends ServiceFactory
 {
-    public function __construct(
-        private ContainerInterface $container
-    ) {}
-    
-    public function get(string $id): mixed
+    public function create(array $args = []): UserHandler
     {
-        return $this->container->get($id);
+        return $this->createService(UserHandler::class, $args);
+    }
+}
+```
+
+Configuration:
+
+```json
+{
+    "preference": {
+        "App\\Factory\\UserHandlerFactoryInterface": {
+            "class": "App\\Factory\\UserHandlerFactory"
+        }
     }
 }
 ```
@@ -278,9 +285,27 @@ class CachedUserRepository implements UserRepositoryInterface
 
 ## Container Access
 
-### In Handlers
+Avoid accessing the container directly. Use constructor injection instead:
 
 ```php
+// ✅ Good - Constructor injection
+class AdminHandler implements RequestHandlerInterface
+{
+    public function __construct(
+        private AdminService $adminService,
+        private ResponseFactoryInterface $responseFactory
+    ) {}
+    
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        $data = $this->adminService->getData();
+        // ...
+    }
+}
+```
+
+```php
+// ❌ Bad - Service locator anti-pattern
 class AdminHandler implements RequestHandlerInterface
 {
     public function __construct(
@@ -289,9 +314,7 @@ class AdminHandler implements RequestHandlerInterface
     
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // Access service directly
         $service = $this->container->get(SomeService::class);
-        
         // ...
     }
 }
@@ -311,8 +334,8 @@ $bootstrap = new Bootstrap(
 
 1. **Prefer Constructor Injection**: Explicit dependencies
 2. **Use Interfaces**: Program to interfaces, not implementations
-3. **Avoid Service Locator**: Use only when necessary
-4. **Lifecycle Awareness**: Choose appropriate lifecycle
+3. **Avoid Service Locator**: Use constructor injection instead
+4. **Shared Services**: Use `shared: true` for singletons
 5. **Configuration**: Externalize configuration
 6. **Testing**: Easy to mock dependencies
 

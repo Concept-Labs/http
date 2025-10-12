@@ -13,26 +13,20 @@ The Concept-Labs HTTP framework uses a powerful configuration system that suppor
 
 ### Application Configuration
 
-Configuration files are PHP arrays that return configuration data:
+Configuration files use JSON format:
 
-```php
-<?php
-// config/app.php
-return [
-    'app' => [
-        'name' => 'My Application',
-        'env' => '${APP_ENV|production}',
-        'debug' => '${APP_DEBUG|false}',
-    ],
+```json
+{
+    "app": {
+        "name": "My Application",
+        "env": "${APP_ENV|production}",
+        "debug": "${APP_DEBUG|false}"
+    },
     
-    'middleware' => [
-        // Middleware configuration
-    ],
-    
-    'routes' => [
-        // Routes configuration
-    ],
-];
+    "middleware": {
+        
+    }
+}
 ```
 
 ### Configuration Loading
@@ -42,7 +36,7 @@ The Bootstrap class loads configuration using glob patterns:
 ```php
 $bootstrap = new Bootstrap(
     base: __DIR__,
-    configSource: 'config/*.php'  // Loads all PHP files in config/
+    configSource: 'config/*.json'  // Loads all JSON files in config/
 );
 ```
 
@@ -50,14 +44,14 @@ $bootstrap = new Bootstrap(
 
 Use `${VAR_NAME}` syntax with optional defaults:
 
-```php
-[
-    'database' => [
-        'host' => '${DB_HOST|localhost}',
-        'port' => '${DB_PORT|3306}',
-        'name' => '${DB_NAME}',  // Required, no default
-    ],
-]
+```json
+{
+    "database": {
+        "host": "${DB_HOST|localhost}",
+        "port": "${DB_PORT|3306}",
+        "name": "${DB_NAME}"
+    }
+}
 ```
 
 ## Context Variables
@@ -66,79 +60,90 @@ Built-in context variables:
 - `${BASE}` - Application base path
 - `${VENDOR}` - Vendor directory path
 
-```php
-[
-    'paths' => [
-        'root' => '${BASE}',
-        'cache' => '${BASE}/var/cache',
-    ],
-]
+```json
+{
+    "paths": {
+        "root": "${BASE}",
+        "cache": "${BASE}/var/cache"
+    }
+}
 ```
 
 ## Configuration Nodes
 
 ### App Configuration
 
-```php
-[
-    'app' => [
-        'name' => 'Application Name',
-        'env' => 'production',
-        'debug' => false,
-        'timezone' => 'UTC',
-    ],
-]
+```json
+{
+    "app": {
+        "name": "Application Name",
+        "env": "production",
+        "debug": false,
+        "timezone": "UTC"
+    }
+}
 ```
 
 ### Middleware Configuration
 
-```php
-[
-    'middleware' => [
-        [
-            'preference' => 'App\\Middleware\\AuthMiddleware',
-            'priority' => 100,
-            'config' => [
-                // Middleware-specific config
-            ],
-        ],
-        [
-            'preference' => 'Concept\\Http\\Router\\RouterInterface',
-            'priority' => 50,
-        ],
-    ],
-]
+```json
+{
+    "middleware": {
+        "auth": {
+            "preference": "App\\Middleware\\AuthMiddleware",
+            "priority": 100,
+            "config": {
+                
+            }
+        },
+        "router": {
+            "preference": "Concept\\Http\\Router\\RouterInterface",
+            "priority": 50
+        }
+    }
+}
 ```
 
 Priority order:
 - Higher priority = executed first
 - Same priority = order preserved
 
-### Routes Configuration
+### Router Configuration
 
-```php
-[
-    'routes' => [
-        '/' => [
-            'method' => 'GET',
-            'handler' => [
-                'preference' => 'App\\Handler\\HomeHandler',
+Router is configured as middleware with routes defined in the "route" subnode:
+
+```json
+{
+    "middleware": {
+        "router": {
+            "preference": "Concept\\Http\\Router\\RouterInterface",
+            "priority": 10,
+            "@import": [
+                "${BASE}/etc/router/*.json"
             ],
-        ],
-        '/api/users/{id}' => [
-            'method' => ['GET', 'PUT', 'DELETE'],
-            'handler' => [
-                'preference' => 'App\\Handler\\UserHandler',
-                'middleware' => [
-                    'auth' => [
-                        'preference' => 'App\\Middleware\\AuthMiddleware',
-                        'priority' => 100,
-                    ],
-                ],
-            ],
-        ],
-    ],
-]
+            "route": {
+                "/": {
+                    "method": ["GET"],
+                    "handler": {
+                        "preference": "App\\Handler\\HomeHandler"
+                    }
+                },
+                "/api/users/{id}": {
+                    "method": ["GET", "PUT", "DELETE"],
+                    "handler": {
+                        "preference": "App\\Handler\\UserHandler",
+                        "middleware": {
+                            "auth": {
+                                "preference": "App\\Middleware\\AuthMiddleware",
+                                "priority": 100
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 ```
 
 ## DI Container Configuration
@@ -156,7 +161,7 @@ Configure service bindings in `concept.json`:
                     },
                     "App\\Repository\\UserRepositoryInterface": {
                         "class": "App\\Repository\\UserRepository",
-                        "lifecycle": "shared"
+                        "shared": true
                     }
                 }
             }

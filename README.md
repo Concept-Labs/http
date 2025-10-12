@@ -67,7 +67,7 @@ use Concept\Http\Bootstrap;
 // Create bootstrap instance
 $bootstrap = new Bootstrap(
     base: __DIR__,
-    configSource: 'config/*.php'
+    configSource: 'config/*.json'
 );
 
 // Create and run application
@@ -77,38 +77,36 @@ $app->run();
 
 ### Configuration Example
 
-Create `config/app.php`:
+Create `config/app.json`:
 
-```php
-<?php
-return [
-    'app' => [
-        'name' => 'My Application',
-        'debug' => true,
-    ],
+```json
+{
+    "app": {
+        "name": "My Application",
+        "debug": true
+    },
     
-    'middleware' => [
-        [
-            'preference' => 'Concept\\Http\\Router\\RouterInterface',
-            'priority' => 100,
-        ],
-    ],
-    
-    'routes' => [
-        '/' => [
-            'method' => 'GET',
-            'handler' => [
-                'preference' => 'App\\Handler\\HomeHandler',
-            ],
-        ],
-        '/api/users/{id}' => [
-            'method' => ['GET', 'PUT', 'DELETE'],
-            'handler' => [
-                'preference' => 'App\\Handler\\UserHandler',
-            ],
-        ],
-    ],
-];
+    "middleware": {
+        "router": {
+            "preference": "Concept\\Http\\Router\\RouterInterface",
+            "priority": 100,
+            "route": {
+                "/": {
+                    "method": ["GET"],
+                    "handler": {
+                        "preference": "App\\Handler\\HomeHandler"
+                    }
+                },
+                "/api/users/{id}": {
+                    "method": ["GET", "PUT", "DELETE"],
+                    "handler": {
+                        "preference": "App\\Handler\\UserHandler"
+                    }
+                }
+            }
+        }
+    }
+}
 ```
 
 ### Custom Middleware
@@ -214,8 +212,9 @@ Run the test suite:
 
 ### Configuration
 
+- Use **JSON format** for all configuration files
 - Use **package-level** configuration in `concept.json` for DI bindings
-- Use **application** configuration in `config/*.php` for app settings
+- Use **application** configuration in `config/*.json` for app settings
 - Leverage configuration **directives** (@import, @include, @extends)
 - Use **environment variables** with `${ENV_VAR}` syntax
 
@@ -224,7 +223,8 @@ Run the test suite:
 - Use **constructor injection** for dependencies
 - Implement **Injectable** interface for automatic DI
 - Define **preferences** in `concept.json` for interface bindings
-- Leverage **lifecycle patterns** (Shared, Prototype, Weak)
+- Use **shared: true** for singleton services
+- Avoid **service locator** anti-pattern
 
 ## 🤝 Contributing
 
@@ -254,11 +254,10 @@ require_once 'vendor/autoload.php';
 
 use Concept\Http\Bootstrap;
 
-// Bootstrap with custom container
+// Bootstrap with configuration
 $bootstrap = new Bootstrap(
     base: __DIR__,
-    configSource: 'config/*.{php,json}',
-    container: null // or provide custom PSR-11 container
+    configSource: 'config/*.json'
 );
 
 // Get application

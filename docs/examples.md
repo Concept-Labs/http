@@ -42,7 +42,7 @@ use Concept\Http\Bootstrap;
 
 $bootstrap = new Bootstrap(
     base: dirname(__DIR__),
-    configSource: 'config/*.php'
+    configSource: 'config/*.json'
 );
 
 $app = $bootstrap->app();
@@ -51,69 +51,67 @@ $app->run();
 
 ### Configuration
 
-```php
-<?php
-// config/app.php
-return [
-    'app' => [
-        'name' => 'API Application',
-        'env' => '${APP_ENV|production}',
-    ],
+File: `config/app.json`
+```json
+{
+    "app": {
+        "name": "API Application",
+        "env": "${APP_ENV|production}"
+    },
     
-    'middleware' => [
-        [
-            'preference' => 'App\\Middleware\\CorsMiddleware',
-            'priority' => 200,
-        ],
-        [
-            'preference' => 'App\\Middleware\\JsonMiddleware',
-            'priority' => 150,
-        ],
-        [
-            'preference' => 'Concept\\Http\\Router\\RouterInterface',
-            'priority' => 100,
-        ],
-    ],
-];
+    "middleware": {
+        "cors": {
+            "preference": "App\\Middleware\\CorsMiddleware",
+            "priority": 200
+        },
+        "json": {
+            "preference": "App\\Middleware\\JsonMiddleware",
+            "priority": 150
+        },
+        "router": {
+            "preference": "Concept\\Http\\Router\\RouterInterface",
+            "priority": 100
+        }
+    }
+}
 ```
 
-```php
-<?php
-// config/routes.php
-return [
-    'routes' => [
-        '/api/auth/login' => [
-            'method' => 'POST',
-            'handler' => [
-                'preference' => 'App\\Handler\\AuthHandler',
-            ],
-        ],
-        '/api/users' => [
-            'method' => ['GET', 'POST'],
-            'handler' => [
-                'preference' => 'App\\Handler\\UserCollectionHandler',
-                'middleware' => [
-                    'auth' => [
-                        'preference' => 'App\\Middleware\\AuthMiddleware',
-                        'priority' => 100,
-                    ],
-                ],
-            ],
-        ],
-        '/api/users/{id}' => [
-            'method' => ['GET', 'PUT', 'DELETE'],
-            'handler' => [
-                'preference' => 'App\\Handler\\UserHandler',
-                'middleware' => [
-                    'auth' => [
-                        'preference' => 'App\\Middleware\\AuthMiddleware',
-                        'priority' => 100,
-                    ],
-                ],
-            ],
-        ],
-    ],
-];
+File: `config/routes.json`
+```json
+{
+    "route": {
+        "/api/auth/login": {
+            "method": ["POST"],
+            "handler": {
+                "preference": "App\\Handler\\AuthHandler"
+            }
+        },
+        "/api/users": {
+            "method": ["GET", "POST"],
+            "handler": {
+                "preference": "App\\Handler\\UserCollectionHandler",
+                "middleware": {
+                    "auth": {
+                        "preference": "App\\Middleware\\AuthMiddleware",
+                        "priority": 100
+                    }
+                }
+            }
+        },
+        "/api/users/{id}": {
+            "method": ["GET", "PUT", "DELETE"],
+            "handler": {
+                "preference": "App\\Handler\\UserHandler",
+                "middleware": {
+                    "auth": {
+                        "preference": "App\\Middleware\\AuthMiddleware",
+                        "priority": 100
+                    }
+                }
+            }
+        }
+    }
+}
 ```
 
 ### Handlers
@@ -350,6 +348,7 @@ class JsonMiddleware implements MiddlewareInterface
 
 ### DI Configuration
 
+File: `concept.json`
 ```json
 {
     "singularity": {
@@ -358,11 +357,11 @@ class JsonMiddleware implements MiddlewareInterface
                 "preference": {
                     "App\\Repository\\UserRepositoryInterface": {
                         "class": "App\\Repository\\UserRepository",
-                        "lifecycle": "shared"
+                        "shared": true
                     },
                     "App\\Service\\AuthService": {
                         "class": "App\\Service\\AuthService",
-                        "lifecycle": "shared"
+                        "shared": true
                     }
                 }
             }
