@@ -2,27 +2,28 @@
 namespace Concept\Http;
 
 use Psr\Container\ContainerInterface;
-use Concept\Composer\Composer;
+use Concept\Singularity\SingularityInterface;
 use Concept\Singularity\Singularity;
-use Concept\Singularity\Config\Plugin\ComposerPlugin;
+use Concept\Http\App\Config\AppConfig;
+use Concept\Http\App\Config\AppConfigInterface;
+use Concept\Composer\Composer;
 use Concept\Config\ConfigInterface;
 use Concept\Config\Factory as ConfigFactory;
 use Concept\Config\Contract\ConfigurableInterface;
+use Concept\Singularity\Config\Plugin\ComposerPlugin;
 use Concept\Config\Parser\Plugin\ConfigValuePlugin;
 use Concept\Config\Parser\Plugin\ContextPlugin;
 use Concept\Config\Parser\Plugin\Directive\CommentPlugin;
+use Concept\Config\Parser\Plugin\Directive\ExtendsPlugin;
 use Concept\Config\Parser\Plugin\Directive\ImportPlugin;
 use Concept\Config\Parser\Plugin\Expression\EnvPlugin;
 use Concept\Config\Parser\Plugin\Expression\ReferencePlugin;
 use Concept\Config\Parser\Plugin\IncludePlugin;
-use Concept\Debug\Debug;
-use Concept\EventDispatcher\EventBusInterface;
-use Concept\Http\App\Config\AppConfig;
-use Concept\Http\App\Config\AppConfigInterface;
-use Concept\Singularity\SingularityInterface;
-
-//use Concept\EventDispatcher\EventBusInterface;
-
+//----
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 class Bootstrap
 {
@@ -86,6 +87,10 @@ class Bootstrap
     protected function getConfig(): ConfigInterface
     {
         if (!$this->config instanceof ConfigInterface) {
+            if (file_exists($this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php')) {
+                $cfg = require $this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php';
+                return $this->config = (new ConfigFactory(AppConfig::class))->fromArray($cfg);
+            }
 
             /**
              @todo compiled
@@ -121,14 +126,18 @@ class Bootstrap
                 ->withPlugin(ImportPlugin::class, 996)
                 ->withPlugin(ReferencePlugin::class, 995)
                 ->withPlugin(ConfigValuePlugin::class, 994)
+                ->withPlugin(ExtendsPlugin::class, 993)
 
                 ->create()
             ;
         }
 
          //$this->config->export($this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php');
-         //Debug::dd($this->config);
+         //Debug::dd($this->config->only('layouts.*'));
+         //Debug::dd($this->config->toArray());
 
+
+        //$this->config->export($this->getBase() . DIRECTORY_SEPARATOR . 'var/config.json');
 
         return $this->config;
     }
@@ -156,20 +165,6 @@ class Bootstrap
         $this->container instanceof SingularityInterface
             && $this->container->register(AppConfigInterface::class, $this->getConfig());
 
-        
-
-//----------------------------------
-
-$eventBus = $this->container->get(EventBusInterface::class, [], [static::class]);
-// $eventBus->register(\Concept\Http\App\Event\StartEvent::class, function ($event) {
-//     echo "<pre>";
-//     print_r($event);
-//         //die('StartEvent fired');
-//     });
-
-$eventBus->dispatch((new \Concept\Http\App\Event\StartEvent())->attach('app', $this));
-//---------------------------------
-
         return $this->container;
     }
 
@@ -183,21 +178,7 @@ $eventBus->dispatch((new \Concept\Http\App\Event\StartEvent())->attach('app', $t
         return $this
             ->getContainer()
                 ->get(AppFactoryInterface::class)
-                    // ->setConfig(
-                    //     $this->getConfig() //->node('app') //no separate node for app config anymore
-                    // )
                 ->create();
     }
-
-    /**
-      @todo: EventBus as middleware
-     */
-    // protected function getEventBus(): ?EventBusInterface
-    // {
-    //     /**
-    //       @todo EventBus as middleware: move to app
-    //      */
-    //     return $this->getContainer()?->get(EventBusInterface::class, [], [static::class]);
-    // }
 
 }

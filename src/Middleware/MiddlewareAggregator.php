@@ -60,23 +60,23 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
     {
         $middlewareConfigStack = [];
 
-        foreach ($this->getMiddlewareConfig() as $id => $config) {
+        foreach ($this->getMiddlewareConfig() as $config) {
 
-            /**
-             * @todo: improve this
-             */
-            $priority = (int)$config['priority'];
-            while (isset($middlewareConfigStack[$priority])) {
-                $priority++;
+            $priority = isset($config['priority']) ? (int)$config['priority'] : 0;
+
+            if (!isset($middlewareConfigStack[$priority])) {
+                $middlewareConfigStack[$priority] = [];
             }
 
-            $middlewareConfigStack[$priority] = $config;
+            $middlewareConfigStack[$priority][] = $config;
         }
 
         ksort($middlewareConfigStack);
 
-        foreach ($middlewareConfigStack as $middlewareConfig) {
-            yield $this->createMiddlewareWrapper($middlewareConfig);
+        foreach ($middlewareConfigStack as $group) {
+            foreach ($group as $middlewareConfig) {
+                yield $this->createMiddlewareWrapper($middlewareConfig);
+            }
         }
     }
 
@@ -91,13 +91,8 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
         $middleware = $this
             ->getMiddlewareWrapperPrototype();
 
-        if ($middleware instanceof ConfigurableInterface) {
-            /**
-              @important!
-              @todo: service factory will do this?
-             */
-            $middleware = $middleware->setConfig(Config::fromArray($config));
-        }
+        $middleware instanceof ConfigurableInterface && 
+            $middleware->setConfig(Config::fromArray($config));
 
         return $middleware;
     }

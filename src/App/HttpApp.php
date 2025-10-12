@@ -45,12 +45,11 @@ class HttpApp extends AbstractApp implements AppInterface
         private AppConfigInterface $config,
         private ServerRequestFactoryInterface $serverRequestFactory,
         private ResponseFactoryInterface $responseFactory,
-        private MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype,
-        private EventDispatcherInterface $eventDispatcher
+        private MiddlewareStackHandlerInterface $middlewareStackHandlerPrototype//,
+        //private EventDispatcherInterface $eventDispatcher
     ) {
-        $this->eventDispatcher->dispatch(new StartEvent(
-           ['app' => $this]
-        ));
+        
+       
     }
 
     /**
@@ -102,18 +101,18 @@ class HttpApp extends AbstractApp implements AppInterface
      * 
      * @return MiddlewareInterface|null
      */
-    public function getMiddleware(string $className): ?MiddlewareInterface
-    {
-        foreach ($this->middlewares as $middlewares) {
-            foreach ($middlewares as $middleware) {
-                if (get_class($middleware) === $className) {
-                    return $middleware;
-                }
-            }
-        }
+    // public function getMiddleware(string $className): ?MiddlewareInterface
+    // {
+    //     foreach ($this->middlewares as $middlewares) {
+    //         foreach ($middlewares as $middleware) {
+    //             if (get_class($middleware) === $className) {
+    //                 return $middleware;
+    //             }
+    //         }
+    //     }
 
-        return null;
-    }
+    //     return null;
+    // }
 
     /**
      * Get the middleware stack
@@ -191,7 +190,7 @@ class HttpApp extends AbstractApp implements AppInterface
     protected function getServerUrl(): string
     {
         $host = $this->getConfig()->get('host') ?? $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $scheme = $_SERVER['REQUEST_SCHEME'] ?? 'http';
+        $scheme = $_SERVER['REQUEST_SCHEME'] ?? 'https';
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
 
         return sprintf(
