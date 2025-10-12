@@ -199,14 +199,13 @@ class ApiClient implements ConfigurableInterface
 
 Configuration:
 
-```php
-// config/app.php
-return [
-    'api' => [
-        'base_url' => '${API_BASE_URL|https://api.example.com}',
-        'timeout' => 60,
-    ],
-];
+```json
+{
+    "api": {
+        "base_url": "@env(API_BASE_URL|https://api.example.com)",
+        "timeout": 60
+    }
+}
 ```
 
 ## Advanced Patterns

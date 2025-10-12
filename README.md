@@ -215,8 +215,8 @@ Run the test suite:
 - Use **JSON format** for all configuration files
 - Use **package-level** configuration in `concept.json` for DI bindings
 - Use **application** configuration in `config/*.json` for app settings
-- Leverage configuration **directives** (@import, @include, @extends)
-- Use **environment variables** with `${ENV_VAR}` syntax
+- Leverage configuration **directives** (@import, @include)
+- Use **context variables** with `${VAR}` syntax and **environment variables** with `@env()` directive
 
 ### Dependency Injection
 

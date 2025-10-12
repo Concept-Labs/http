@@ -19,8 +19,8 @@ Configuration files use JSON format:
 {
     "app": {
         "name": "My Application",
-        "env": "${APP_ENV|production}",
-        "debug": "${APP_DEBUG|false}"
+        "env": "@env(APP_ENV|production)",
+        "debug": "@env(APP_DEBUG|false)"
     },
     
     "middleware": {
@@ -42,21 +42,21 @@ $bootstrap = new Bootstrap(
 
 ## Environment Variables
 
-Use `${VAR_NAME}` syntax with optional defaults:
+Use `@env()` directive with optional defaults:
 
 ```json
 {
     "database": {
-        "host": "${DB_HOST|localhost}",
-        "port": "${DB_PORT|3306}",
-        "name": "${DB_NAME}"
+        "host": "@env(DB_HOST|localhost)",
+        "port": "@env(DB_PORT|3306)",
+        "name": "@env(DB_NAME)"
     }
 }
 ```
 
 ## Context Variables
 
-Built-in context variables:
+Built-in context variables using `${VAR}` syntax:
 - `${BASE}` - Application base path
 - `${VENDOR}` - Vendor directory path
 
@@ -68,6 +68,8 @@ Built-in context variables:
     }
 }
 ```
+
+**Note:** The `${VAR}` syntax is for context variables provided by the Context plugin, not environment variables. Use `@env()` directive for environment variables.
 
 ## Configuration Nodes
 

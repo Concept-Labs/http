@@ -56,7 +56,7 @@ File: `config/app.json`
 {
     "app": {
         "name": "API Application",
-        "env": "${APP_ENV|production}"
+        "env": "@env(APP_ENV|production)"
     },
     
     "middleware": {
