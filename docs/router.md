@@ -1,12 +1,24 @@
-# Routing Guide
+# Router - Optional Feature
 
 ## Overview
 
-The routing system provides flexible, pattern-based URL routing with:
+The Router is an **optional** PSR-15 middleware component included in this package. It provides pattern-based URL routing with:
 - Dynamic route parameters
 - Multiple HTTP methods per route
 - Route-specific middleware
 - RESTful routing support
+
+**Important:** Using the router is not mandatory. Many applications can be built without routing (see [Simple Examples](simple-examples.md)). The router will be moved to a separate package in the future.
+
+## When to Use the Router
+
+Use the router when you need:
+- Multiple URL endpoints with different handlers
+- RESTful API routes
+- Dynamic URL parameters
+- Route-specific middleware
+
+For simpler applications (health checks, webhooks, single-endpoint APIs), consider implementing logic directly in middleware instead.
 
 ## Basic Routing
 

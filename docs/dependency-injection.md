@@ -2,11 +2,19 @@
 
 ## Overview
 
-The Concept-Labs HTTP framework is built on the Singularity DI container, providing powerful dependency injection capabilities with:
+The Concept-Labs HTTP ecosystem is built on the Singularity DI container, providing powerful dependency injection capabilities with:
 - Constructor injection
 - Automatic dependency resolution
-- Lifecycle management (Shared, Prototype, Weak)
+- Shared/Prototype lifecycle management
 - Configuration-driven bindings
+
+## Configuration-Driven DI
+
+Define service bindings in `concept.json`. The "preference" can be:
+- A concrete class name
+- An interface ID (for interface-to-implementation binding)
+
+This enables flexible, configuration-driven application building.
 
 ## Basic Concepts
 

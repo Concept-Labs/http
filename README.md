@@ -1,4 +1,4 @@
-# Concept-Labs HTTP Application Framework
+# Concept-Labs HTTP Application Ecosystem
 
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D8.2-blue.svg)](https://www.php.net/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -6,33 +6,37 @@
 [![PSR-11](https://img.shields.io/badge/PSR-11-blue.svg)](https://www.php-fig.org/psr/psr-11/)
 [![PSR-15](https://img.shields.io/badge/PSR-15-blue.svg)](https://www.php-fig.org/psr/psr-15/)
 
-A powerful, flexible HTTP application framework built on PSR standards and integrated with the Singularity DI container. Part of the Concept-Labs ecosystem.
+A low-level, PSR-compliant HTTP application foundation built on configuration-driven architecture and integrated with the Singularity DI container. Part of the Concept-Labs ecosystem.
 
 ## 🎯 Philosophy
 
-The Concept-Labs HTTP framework embraces the principles of:
+The Concept-Labs HTTP ecosystem embraces the principles of:
 
+- **Configuration-Driven Architecture**: Build entirely different applications (REST APIs, web apps, CLI runners) through configuration alone. See [Configuration Package](https://github.com/Concept-Labs/config) for the powerful configuration system.
 - **Dependency Injection First**: Fully integrated with [Singularity DI Container](https://github.com/Concept-Labs/singularity)
 - **PSR Standards**: Built on PSR-7 (HTTP Messages), PSR-11 (Container), and PSR-15 (HTTP Handlers)
-- **Configuration-Driven**: Powerful configuration system with plugins, inheritance, and environment variable support
-- **Middleware-Centric**: Flexible middleware pipeline with priority-based ordering
+- **Lazy Initialization**: Middleware wrappers ensure components are only instantiated when actually needed
+- **Low-Level Foundation**: Provides core HTTP handling that higher-level packages build upon (like [simple-http](https://github.com/Concept-Labs/simple-http))
 - **SOLID Principles**: Clean, maintainable, and testable code architecture
 
 ### Concept-Labs Ecosystem
 
 This package is part of the Concept-Labs ecosystem and leverages:
 - **Singularity**: Advanced PSR-11 DI container with lifecycle management
-- **Config**: Powerful configuration system with plugins and directives
+- **Config**: Powerful [configuration system](https://github.com/Concept-Labs/config) enabling configuration-driven application building
 - **HTTP Message**: PSR-7 compliant HTTP message implementation
 - **Event Dispatcher**: PSR-14 event dispatcher for application events
+
+This is a **low-level** HTTP application foundation. For higher-level applications, see:
+- **[simple-http](https://github.com/Concept-Labs/simple-http)**: Higher-level HTTP application with additional features
 
 ## ✨ Key Features
 
 - 🚀 **Bootstrap System**: Simple application bootstrapping with minimal configuration
-- 🔀 **Flexible Routing**: Pattern-based routing with dynamic parameters
-- 🎭 **Middleware Pipeline**: PSR-15 middleware with priority-based ordering
+- 🎭 **Middleware Pipeline**: PSR-15 middleware with priority-based ordering and lazy initialization
 - 🏗️ **Dependency Injection**: Full integration with Singularity DI container
-- ⚙️ **Configuration System**: Advanced configuration with includes, imports, and environment variables
+- ⚙️ **Configuration System**: Build different applications through configuration (see [Config Package](https://github.com/Concept-Labs/config))
+- 🔌 **Extensible**: Low-level foundation for higher-level packages
 - 🧪 **Fully Tested**: Comprehensive test coverage with PEST
 - 📦 **PSR Compliant**: Follows PHP-FIG standards
 
@@ -64,7 +68,7 @@ require_once 'vendor/autoload.php';
 
 use Concept\Http\Bootstrap;
 
-// Create bootstrap instance
+// Create bootstrap instance with configuration
 $bootstrap = new Bootstrap(
     base: __DIR__,
     configSource: 'config/*.json'
@@ -75,7 +79,9 @@ $app = $bootstrap->app();
 $app->run();
 ```
 
-### Configuration Example
+### Configuration-Driven Setup
+
+The power of this ecosystem lies in its configuration-driven architecture. Your entire application is defined through configuration:
 
 Create `config/app.json`:
 
@@ -87,29 +93,21 @@ Create `config/app.json`:
     },
     
     "middleware": {
-        "router": {
-            "preference": "Concept\\Http\\Router\\RouterInterface",
-            "priority": 100,
-            "route": {
-                "/": {
-                    "method": ["GET"],
-                    "handler": {
-                        "preference": "App\\Handler\\HomeHandler"
-                    }
-                },
-                "/api/users/{id}": {
-                    "method": ["GET", "PUT", "DELETE"],
-                    "handler": {
-                        "preference": "App\\Handler\\UserHandler"
-                    }
-                }
-            }
+        "custom": {
+            "preference": "App\\Middleware\\CustomMiddleware",
+            "priority": 100
         }
     }
 }
 ```
 
+**Note:** All middleware is provided by your application - this package only provides the foundation and middleware pipeline infrastructure.
+
+For routing functionality, see the [Router Documentation](docs/router.md) (optional feature).
+
 ### Custom Middleware
+
+Create your own middleware to handle requests:
 
 ```php
 <?php
@@ -120,26 +118,28 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-class AuthMiddleware implements MiddlewareInterface
+class CustomMiddleware implements MiddlewareInterface
 {
     public function process(
         ServerRequestInterface $request, 
         RequestHandlerInterface $handler
     ): ResponseInterface {
-        // Authentication logic here
+        // Process request
         
         return $handler->handle($request);
     }
 }
 ```
 
+**Important:** Define middleware in configuration (preferred) rather than using `addMiddleware()` method. Configuration-based approach allows for better DI integration and lazy initialization.
+
 ## 📚 Documentation
 
 - **[Installation Guide](docs/installation.md)** - Detailed installation and setup
-- **[Configuration](docs/configuration.md)** - Complete configuration reference
-- **[Routing](docs/routing.md)** - Routing system and patterns
-- **[Middleware](docs/middleware.md)** - Middleware pipeline and creation
+- **[Configuration](docs/configuration.md)** - Configuration system reference (see also [Config Package](https://github.com/Concept-Labs/config))
+- **[Middleware](docs/middleware.md)** - Middleware pipeline and lazy initialization
 - **[Dependency Injection](docs/dependency-injection.md)** - DI container integration
+- **[Router (Optional)](docs/router.md)** - Built-in routing middleware (optional feature)
 - **[Examples](docs/examples.md)** - Real-world usage examples
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
 
@@ -156,27 +156,32 @@ class AuthMiddleware implements MiddlewareInterface
                    │
 ┌──────────────────▼──────────────────────────────────┐
 │                   HttpApp                            │
-│  • Manages middleware stack                         │
-│  • Processes HTTP requests                          │
+│  • Manages middleware stack with lazy wrappers      │
+│  • Processes HTTP requests through pipeline         │
 │  • Handles response generation                      │
 └──────────────────┬──────────────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────────────┐
 │              Middleware Pipeline                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
-│  │ Router   │→ │  Auth    │→ │ Handler  │          │
-│  └──────────┘  └──────────┘  └──────────┘          │
+│  ┌──────────────┐  ┌──────────────┐                │
+│  │ Your Custom  │→ │ Your Handler │                │
+│  │  Middleware  │  │  (Optional)  │                │
+│  └──────────────┘  └──────────────┘                │
+│                                                      │
+│  Note: All middleware is developer-provided         │
+│  This package provides infrastructure only          │
 └─────────────────────────────────────────────────────┘
 ```
 
-### Request Flow
+### Lazy Middleware Initialization
 
-1. **Bootstrap** initializes the DI container and loads configuration
-2. **AppFactory** creates the HttpApp instance with middleware
-3. **Middleware Pipeline** processes the request through configured middleware
-4. **Router** matches the request to a route
-5. **Handler** generates the response
-6. **Response** is sent back through the middleware chain
+Middleware uses a **wrapper pattern** for lazy initialization:
+- Middleware is not instantiated until actually needed in the request chain
+- If a middleware returns a response early, subsequent middleware is never created
+- Improves performance by avoiding unnecessary object creation
+- Automatic through the MiddlewareWrapper system
+
+See [Middleware Guide](docs/middleware.md) for details.
 
 ## 🧪 Testing
 
@@ -284,17 +289,24 @@ See [docs/examples.md](docs/examples.md) for more comprehensive examples.
 
 ## ❓ FAQs
 
-**Q: How is this different from other PHP frameworks?**  
-A: Concept-Labs HTTP is not a full-stack framework but a lightweight, PSR-compliant HTTP application layer. It focuses on DI-first architecture and configuration-driven development.
+**Q: What makes this different from other PHP frameworks?**  
+A: This is not a framework - it's a low-level HTTP application ecosystem. It provides the foundation (middleware pipeline, DI integration, configuration system) that higher-level packages build upon. Your application is entirely configuration-driven.
 
-**Q: Can I use this without Singularity DI?**  
-A: Technically yes, by providing your own PSR-11 container, but Singularity integration provides the best experience with advanced features like lifecycle management and configuration-based DI.
+**Q: Do I need to use the Router?**  
+A: No! The router is an optional middleware component included in this package. You can build applications without it or use your own routing solution.
+
+**Q: Where's the Auth middleware, CORS, etc.?**  
+A: This package provides only the infrastructure. All middleware (auth, CORS, validation, etc.) is developer-provided. This keeps the package lean and flexible.
+
+**Q: Configuration vs addMiddleware()?**  
+A: Configuration is preferred. It enables:
+- Lazy initialization through middleware wrappers
+- Better DI integration (can use interface IDs as preferences)
+- Configuration-driven application building
+- The `addMiddleware()` method is available for runtime scenarios
 
 **Q: Is it production-ready?**  
-A: Yes! The package is fully tested and follows SOLID principles and PSR standards.
-
-**Q: How do I handle CORS, sessions, etc.?**  
-A: Implement custom middleware for these concerns. Check the [Middleware Guide](docs/middleware.md) for examples.
+A: Yes! The package is fully tested, follows PSR standards, and SOLID principles. It's designed as a foundation for production applications.
 
 ## 📄 License
 

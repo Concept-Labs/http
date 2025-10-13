@@ -2,12 +2,25 @@
 
 ## Overview
 
-The Concept-Labs HTTP framework uses a powerful configuration system that supports:
+The Concept-Labs HTTP ecosystem uses a powerful configuration system that enables **building entirely different applications through configuration alone**. See the [Configuration Package](https://github.com/Concept-Labs/config) for complete documentation.
+
+The configuration system supports:
 - File globbing for loading multiple config files
-- Environment variable substitution
-- Configuration inheritance and imports
+- Context variable substitution (`${BASE}`, `${VENDOR}`)
+- Environment variable substitution (`@env()`)
+- Configuration imports and includes
 - Plugin-based parsing
-- Context variables
+
+## Configuration-Driven Architecture
+
+The key philosophy: **your application is defined by configuration, not code**. You can build:
+- REST APIs
+- Web applications
+- CLI runners
+- Webhook handlers
+- Health check services
+
+All through different configuration files using the same codebase.
 
 ## Configuration Structure
 

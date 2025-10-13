@@ -433,7 +433,7 @@ ConfigNodeInterface::NODE_PREFERENCE = "preference"
 
 ## PSR Compliance
 
-The framework implements the following PSR standards:
+The ecosystem implements the following PSR standards:
 
 - **PSR-4**: Autoloading Standard
 - **PSR-7**: HTTP Message Interface

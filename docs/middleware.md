@@ -2,11 +2,22 @@
 
 ## Overview
 
-Middleware provides a mechanism to filter and process HTTP requests entering your application. Each middleware can:
+Middleware provides the core request/response processing mechanism in the Concept-Labs HTTP ecosystem. Each middleware can:
 - Inspect and modify requests
 - Generate responses
 - Pass control to the next middleware
 - Execute logic before and after the request is handled
+
+## Lazy Initialization
+
+**Important Feature:** Middleware uses a wrapper pattern for lazy initialization:
+
+1. Middleware is **not instantiated** when the application starts
+2. Only created when actually needed during request processing
+3. If middleware returns a response early, subsequent middleware is **never created**
+4. This improves performance and reduces memory usage
+
+The `MiddlewareWrapper` class handles this automatically - you just configure your middleware preferences.
 
 ## Middleware Pipeline
 
@@ -114,9 +125,9 @@ return [
 ];
 ```
 
-### Runtime Middleware
+### Runtime Middleware (Less Preferred)
 
-Add middleware programmatically:
+You can add middleware at runtime, but configuration is preferred:
 
 ```php
 $app->addMiddleware(
@@ -125,6 +136,11 @@ $app->addMiddleware(
     id: 'custom-middleware'
 );
 ```
+
+**Use configuration instead for:**
+- Lazy initialization benefits
+- Better DI integration
+- Configuration-driven architecture
 
 ### Route-Specific Middleware
 

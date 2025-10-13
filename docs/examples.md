@@ -1,8 +1,12 @@
 # Examples
 
-## Complete Application Example
+## Overview
 
-This example shows a complete REST API application with authentication.
+These examples demonstrate the configuration-driven architecture of the Concept-Labs HTTP ecosystem. For **simpler, real-world examples**, see [Simple Examples](simple-examples.md).
+
+This document shows a more complex REST API implementation with multiple middleware components.
+
+**Note:** All middleware shown (CORS, JSON, Auth) are **developer-provided examples** - not included in this package.
 
 ### Project Structure
 
