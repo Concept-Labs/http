@@ -105,20 +105,12 @@ class Bootstrap
 
             // Create configuration with plugins
             // Plugins are executed in priority order (higher = first)
-            $this->config = (new ConfigFactory(AppConfig::class))
-                ->withContext($context)
-                ->withGlob($this->getBase() . DIRECTORY_SEPARATOR . $this->getConfigSrc())
-                ->withPlugin(ComposerPlugin::class)       // Singularity DI integration
-                ->withPlugin(EnvPlugin::class, 999)       // @env() directive for environment variables
-                ->withPlugin(ContextPlugin::class, 998)   // ${VAR} syntax for context variables
-                ->withPlugin(IncludePlugin::class, 997)   // @include directive
-                ->withPlugin(ImportPlugin::class, 996)    // @import directive
-                ->withPlugin(CommentPlugin::class, 996)   // Comment handling
-                ->withPlugin(ReferencePlugin::class, 995) // @reference directive
-                ->withPlugin(ConfigValuePlugin::class, 994) // Config value parsing
-                ->withPlugin(ExtendsPlugin::class, 993)   // @extends directive (future feature)
-                ->create()
-            ;
+            $this->config = \Concept\Config\Facade\Config::chargedFactory(
+                $this->getBase() . DIRECTORY_SEPARATOR . $this->getConfigSrc(),
+                $context
+            )
+            ->withPlugin(ComposerPlugin::class) // register the Singularity Composer plugin
+            ->create(AppConfig::class);
         }
 
         return $this->config;
