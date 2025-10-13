@@ -16,10 +16,13 @@ class Route implements RouteInterface
 
 
     /**
-     * {@inheritDoc}
-     */
-    /**
-     @todo: static
+     * Match the request against this route
+     * 
+     * Checks if the request method and URI path match this route's pattern.
+     * Supports dynamic parameters like {id} in the path.
+     * 
+     * @param ServerRequestInterface $request The HTTP request to match
+     * @return bool True if the route matches, false otherwise
      */
     public function match(ServerRequestInterface $request): bool
     {
@@ -64,21 +67,25 @@ class Route implements RouteInterface
     /**
      * Extract parameters from the request URI and inject them into the request
      * 
-     * @param ServerRequestInterface $request
-     * @return ServerRequestInterface
+     * Extracts dynamic route parameters (e.g., {id}) from the URI and adds them
+     * as request attributes and query parameters.
+     * 
+     * @param ServerRequestInterface $request The request to extract parameters from
+     * @return ServerRequestInterface Request with extracted parameters
      */
     protected function extractParameters(ServerRequestInterface $request): ServerRequestInterface
     {
         $routePath = $this->getPath();
         $path = rtrim($request->getUri()->getPath(), '/');
 
-        // Відповідність параметрів маршруту запиту
+        // Match route parameters
         if (preg_match($this->buildRouteRegex($routePath), $path, $matches)) {
             foreach ($matches as $key => $value) {
                 if (!is_int($key)) {
+                    // Add as request attribute
                     $request = $request->withAttribute($key, $value);
 
-                    // Додаємо параметри також до запитів, якщо це потрібно
+                    // Also add to query parameters for convenience
                     $queryParams = $request->getQueryParams();
                     $queryParams[$key] = $value;
                     $request = $request->withQueryParams($queryParams);

@@ -8,9 +8,11 @@ use Concept\Config\Contract\ConfigurableTrait;
 use Concept\Http\Router\Route\RouteInterface;
 use Traversable;
 
-
 /**
- @todo: refactor the aggregator, use static Route::match()
+ * Route aggregator
+ * 
+ * Aggregates routes from configuration and creates route instances.
+ * Uses prototype pattern for efficient route creation.
  */
 class RouteAggregator implements RouteAggregatorInterface
 {
@@ -46,16 +48,17 @@ class RouteAggregator implements RouteAggregatorInterface
     }
 
     /**
-     * Aggregate the routes
+     * Aggregate the routes from configuration
      * 
-     * @return Traverseable
+     * Iterates through route configuration and creates route instances.
+     * Each route is configured with its path from the configuration key.
+     * 
+     * @return Traversable<RouteInterface>
      */
     protected function aggregate(): Traversable
     {
         foreach ($this->getConfig() as $path => $routeConfigData) {
-            //$node = $this->getConfig()->node($path);//->set('path', $path);
             yield $this->createRoute(
-                //$node
                 Config::fromArray($routeConfigData + ['path' => $path])
             );
         }

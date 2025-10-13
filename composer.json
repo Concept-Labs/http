@@ -22,8 +22,13 @@
         }
     },
     "require-dev": {
+        "pestphp/pest": "^4.1",
+        "mockery/mockery": "^1.6"
     },
     "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
     },
     "extra": {
         "concept": {
@@ -31,6 +36,10 @@
                 "concept.json"
             ]
         }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     }
-
 }
