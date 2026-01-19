@@ -91,27 +91,34 @@ class Bootstrap
     {
         if (!$this->config instanceof ConfigInterface) {
             // Check for cached configuration
-            $cachedConfig = $this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php';
-            if (file_exists($cachedConfig)) {
-                $cfg = require $cachedConfig;
-                return $this->config = (new ConfigFactory(AppConfig::class))->fromArray($cfg);
-            }
+
+ $cachedConfig = $this->getBase() . DIRECTORY_SEPARATOR . 'var/config.php';
+// if (file_exists($cachedConfig)) {
+//     $cfg = require $cachedConfig;
+//     return $this->config = (new ConfigFactory(AppConfig::class))->fromArray($cfg);
+// }
 
             // Build context for configuration parsing
             $context = [
                 'BASE' => $this->getBase(),
-                'VENDOR' => Composer::getVendorDir(),
+                'VENDOR' => Composer::vendor(),
             ];
 
             // Create configuration with plugins
             // Plugins are executed in priority order (higher = first)
-            $this->config = \Concept\Config\Facade\Config::chargedFactory(
+            $this->config = \Concept\Config\Facade\Charged\Factory::factory(
                 $this->getBase() . DIRECTORY_SEPARATOR . $this->getConfigSrc(),
                 $context
             )
             ->withPlugin(ComposerPlugin::class) // register the Singularity Composer plugin
-            ->create(AppConfig::class);
+            ->create(AppConfig::class)
+            ->export($cachedConfig) // cache the configuration for future requests
+            ;
         }
+
+        // echo "<pre>"; print_r($this->config::$nInstances); echo "</pre>";
+        // echo "<pre>"; print_r($this->config->toArray()); echo "</pre>";
+        // die();
 
         return $this->config;
     }

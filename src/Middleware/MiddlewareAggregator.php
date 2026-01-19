@@ -60,7 +60,7 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
     {
         $middlewareConfigStack = [];
 
-        foreach ($this->getMiddlewareConfig() as $config) {
+        foreach ($this->getMiddlewareConfig() as $middlewareId => $config) {
 
             $priority = isset($config['priority']) ? (int)$config['priority'] : 0;
 
@@ -68,13 +68,14 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
                 $middlewareConfigStack[$priority] = [];
             }
 
-            $middlewareConfigStack[$priority][] = $config;
+            $middlewareConfigStack[$priority][$middlewareId] = $config;
         }
 
         ksort($middlewareConfigStack);
 
         foreach ($middlewareConfigStack as $group) {
-            foreach ($group as $middlewareConfig) {
+            foreach ($group as $middlewareId => $middlewareConfig) {
+                $this->assertConfig($middlewareConfig, $middlewareId);
                 yield $this->createMiddlewareWrapper($middlewareConfig);
             }
         }
@@ -88,13 +89,11 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
      */
     protected function createMiddlewareWrapper(array $config): MiddlewareWrapperInterface
     {
-        $middleware = $this
-            ->getMiddlewareWrapperPrototype();
+        $middlewareWrapper = $this
+            ->getMiddlewareWrapperPrototype()
+            ->setConfig(Config::fromArray($config));
 
-        $middleware instanceof ConfigurableInterface && 
-            $middleware->setConfig(Config::fromArray($config));
-
-        return $middleware;
+        return $middlewareWrapper;
     }
 
     /**
@@ -113,5 +112,27 @@ class MiddlewareAggregator implements MiddlewareAggregatorInterface
     public function getIterator(): Traversable
     {
         yield from $this->aggregate();
+    }
+
+    protected function assertConfig($config, $middlewareId): void
+    {
+        if (!is_array($config)) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Invalid middleware configuration for middleware ID "%s". Expected array, got %s',
+                    $middlewareId,
+                    gettype($config)
+                )
+            );
+        }
+
+        if (!isset($config['preference'])) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Missing "preference" in middleware configuration for middleware ID "%s"',
+                    $middlewareId
+                )
+            );
+        }
     }
 }
